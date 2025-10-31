@@ -1,982 +1,2225 @@
-// TODO: Fix the typing issue for OpenGL32.glGetString()…
+import { FFIType, dlopen } from 'bun:ffi';
 
-import { type FFIFunction, FFIType, dlopen } from 'bun:ffi';
+import type {
+  GLbitfield,
+  GLboolean,
+  GLboolean_,
+  GLbyte,
+  GLbyte_,
+  GLclampd,
+  GLclampf,
+  GLclampf_,
+  GLdouble,
+  GLdouble_,
+  GLenum,
+  GLfloat,
+  GLfloat_,
+  GLint,
+  GLint_,
+  GLshort,
+  GLshort_,
+  GLsizei,
+  GLubyte,
+  GLubyte_,
+  GLuint,
+  GLuint_,
+  GLushort,
+  GLushort_,
+  GLvoid_,
 
-import type { GLbitfield, GLboolean, GLboolean_, GLclampd, GLclampf, GLclampf_, GLdouble, GLdouble_, GLenum, GLfloat, GLfloat_, GLint, GLint_, GLshort_, GLsizei, GLubyte_, GLuint, GLuint_, GLushort_, GLvoid_ } from '../types/OpenGL';
-
-const { f32, f64, i16, i32, ptr, u16, u32, u8, void: voidType } = FFIType;
-
-function load<FunctionDescriptor extends FFIFunction, FunctionName extends string>(functionName: FunctionName, functionDescriptor: FunctionDescriptor) {
-  return dlopen<Record<FunctionName, FunctionDescriptor>>('opengl32.dll', { [functionName]: functionDescriptor } as Record<FunctionName, FunctionDescriptor>).symbols[functionName];
-}
+  // Windows/WGL aliases
+  BOOL,
+  INT,
+  UINT,
+  DWORD,
+  HDC,
+  HGLRC,
+  PROC,
+  LPCSTR,
+  LPPIXELFORMATDESCRIPTOR,
+  LPLAYERPLANEDESCRIPTOR,
+  LPGLYPHMETRICSFLOAT,
+  LPWGLSWAP,
+} from '../types/OpenGL';
 
 class OpenGL32 {
-  public glAccum(op: GLenum, value: GLfloat): void {
-    return (this._glAccum ??= load('glAccum', { args: [u32, f32], returns: voidType }))(op, value);
+  public static Init(): typeof OpenGL32 {
+    return Object.defineProperties(OpenGL32, {
+      ...Object.fromEntries(Object.entries(dlopen('opengl32.dll', OpenGL32.Symbols)).map(([name, symbol]) => [name, { configurable: false, value: symbol, writable: false }])),
+      Init: { configurable: false, value: () => OpenGL32, writable: false },
+    });
+  }
+
+  static readonly Symbols = {
+    glAccum: { args: [FFIType.u32, FFIType.f32], returns: FFIType.void },
+    glAlphaFunc: { args: [FFIType.u32, FFIType.f32], returns: FFIType.void },
+    glAreTexturesResident: { args: [FFIType.i32, FFIType.ptr, FFIType.ptr], returns: FFIType.u8 },
+    glArrayElement: { args: [FFIType.i32], returns: FFIType.void },
+    glBegin: { args: [FFIType.u32], returns: FFIType.void },
+    glBindTexture: { args: [FFIType.u32, FFIType.u32], returns: FFIType.void },
+    glBitmap: { args: [FFIType.i32, FFIType.i32, FFIType.f32, FFIType.f32, FFIType.f32, FFIType.f32, FFIType.ptr], returns: FFIType.void },
+    glBlendFunc: { args: [FFIType.u32, FFIType.u32], returns: FFIType.void },
+    glCallList: { args: [FFIType.u32], returns: FFIType.void },
+    glCallLists: { args: [FFIType.i32, FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glClear: { args: [FFIType.u32], returns: FFIType.void },
+    glClearAccum: { args: [FFIType.f32, FFIType.f32, FFIType.f32, FFIType.f32], returns: FFIType.void },
+    glClearColor: { args: [FFIType.f32, FFIType.f32, FFIType.f32, FFIType.f32], returns: FFIType.void },
+    glClearDepth: { args: [FFIType.f64], returns: FFIType.void },
+    glClearIndex: { args: [FFIType.f32], returns: FFIType.void },
+    glClearStencil: { args: [FFIType.i32], returns: FFIType.void },
+    glClipPlane: { args: [FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glColor3b: { args: [FFIType.i8, FFIType.i8, FFIType.i8], returns: FFIType.void },
+    glColor3bv: { args: [FFIType.ptr], returns: FFIType.void },
+    glColor3d: { args: [FFIType.f64, FFIType.f64, FFIType.f64], returns: FFIType.void },
+    glColor3dv: { args: [FFIType.ptr], returns: FFIType.void },
+    glColor3f: { args: [FFIType.f32, FFIType.f32, FFIType.f32], returns: FFIType.void },
+    glColor3fv: { args: [FFIType.ptr], returns: FFIType.void },
+    glColor3i: { args: [FFIType.i32, FFIType.i32, FFIType.i32], returns: FFIType.void },
+    glColor3iv: { args: [FFIType.ptr], returns: FFIType.void },
+    glColor3s: { args: [FFIType.i16, FFIType.i16, FFIType.i16], returns: FFIType.void },
+    glColor3sv: { args: [FFIType.ptr], returns: FFIType.void },
+    glColor3ub: { args: [FFIType.u8, FFIType.u8, FFIType.u8], returns: FFIType.void },
+    glColor3ubv: { args: [FFIType.ptr], returns: FFIType.void },
+    glColor3ui: { args: [FFIType.u32, FFIType.u32, FFIType.u32], returns: FFIType.void },
+    glColor3uiv: { args: [FFIType.ptr], returns: FFIType.void },
+    glColor3us: { args: [FFIType.u16, FFIType.u16, FFIType.u16], returns: FFIType.void },
+    glColor3usv: { args: [FFIType.ptr], returns: FFIType.void },
+    glColor4b: { args: [FFIType.i8, FFIType.i8, FFIType.i8, FFIType.i8], returns: FFIType.void },
+    glColor4bv: { args: [FFIType.ptr], returns: FFIType.void },
+    glColor4d: { args: [FFIType.f64, FFIType.f64, FFIType.f64, FFIType.f64], returns: FFIType.void },
+    glColor4dv: { args: [FFIType.ptr], returns: FFIType.void },
+    glColor4f: { args: [FFIType.f32, FFIType.f32, FFIType.f32, FFIType.f32], returns: FFIType.void },
+    glColor4fv: { args: [FFIType.ptr], returns: FFIType.void },
+    glColor4i: { args: [FFIType.i32, FFIType.i32, FFIType.i32, FFIType.i32], returns: FFIType.void },
+    glColor4iv: { args: [FFIType.ptr], returns: FFIType.void },
+    glColor4s: { args: [FFIType.i16, FFIType.i16, FFIType.i16, FFIType.i16], returns: FFIType.void },
+    glColor4sv: { args: [FFIType.ptr], returns: FFIType.void },
+    glColor4ub: { args: [FFIType.u8, FFIType.u8, FFIType.u8, FFIType.u8], returns: FFIType.void },
+    glColor4ubv: { args: [FFIType.ptr], returns: FFIType.void },
+    glColor4ui: { args: [FFIType.u32, FFIType.u32, FFIType.u32, FFIType.u32], returns: FFIType.void },
+    glColor4uiv: { args: [FFIType.ptr], returns: FFIType.void },
+    glColor4us: { args: [FFIType.u16, FFIType.u16, FFIType.u16, FFIType.u16], returns: FFIType.void },
+    glColor4usv: { args: [FFIType.ptr], returns: FFIType.void },
+    glColorMask: { args: [FFIType.u8, FFIType.u8, FFIType.u8, FFIType.u8], returns: FFIType.void },
+    glColorMaterial: { args: [FFIType.u32, FFIType.u32], returns: FFIType.void },
+    glColorPointer: { args: [FFIType.i32, FFIType.u32, FFIType.i32, FFIType.ptr], returns: FFIType.void },
+    glCopyPixels: { args: [FFIType.i32, FFIType.i32, FFIType.i32, FFIType.i32, FFIType.u32], returns: FFIType.void },
+    glCopyTexImage1D: { args: [FFIType.u32, FFIType.i32, FFIType.u32, FFIType.i32, FFIType.i32, FFIType.i32, FFIType.i32], returns: FFIType.void },
+    glCopyTexImage2D: { args: [FFIType.u32, FFIType.i32, FFIType.u32, FFIType.i32, FFIType.i32, FFIType.i32, FFIType.i32, FFIType.i32], returns: FFIType.void },
+    glCopyTexSubImage1D: { args: [FFIType.u32, FFIType.i32, FFIType.i32, FFIType.i32, FFIType.i32, FFIType.i32], returns: FFIType.void },
+    glCopyTexSubImage2D: { args: [FFIType.u32, FFIType.i32, FFIType.i32, FFIType.i32, FFIType.i32, FFIType.i32, FFIType.i32, FFIType.i32], returns: FFIType.void },
+    glCullFace: { args: [FFIType.u32], returns: FFIType.void },
+    glDeleteLists: { args: [FFIType.u32, FFIType.i32], returns: FFIType.void },
+    glDeleteTextures: { args: [FFIType.i32, FFIType.ptr], returns: FFIType.void },
+    glDepthFunc: { args: [FFIType.u32], returns: FFIType.void },
+    glDepthMask: { args: [FFIType.u8], returns: FFIType.void },
+    glDepthRange: { args: [FFIType.f64, FFIType.f64], returns: FFIType.void },
+    glDisable: { args: [FFIType.u32], returns: FFIType.void },
+    glDisableClientState: { args: [FFIType.u32], returns: FFIType.void },
+    glDrawArrays: { args: [FFIType.u32, FFIType.i32, FFIType.i32], returns: FFIType.void },
+    glDrawBuffer: { args: [FFIType.u32], returns: FFIType.void },
+    glDrawElements: { args: [FFIType.u32, FFIType.i32, FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glDrawPixels: { args: [FFIType.i32, FFIType.i32, FFIType.u32, FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glEdgeFlag: { args: [FFIType.u8], returns: FFIType.void },
+    glEdgeFlagPointer: { args: [FFIType.i32, FFIType.ptr], returns: FFIType.void },
+    glEdgeFlagv: { args: [FFIType.ptr], returns: FFIType.void },
+    glEnable: { args: [FFIType.u32], returns: FFIType.void },
+    glEnableClientState: { args: [FFIType.u32], returns: FFIType.void },
+    glEnd: { args: [], returns: FFIType.void },
+    glEndList: { args: [], returns: FFIType.void },
+    glEvalCoord1d: { args: [FFIType.f64], returns: FFIType.void },
+    glEvalCoord1dv: { args: [FFIType.ptr], returns: FFIType.void },
+    glEvalCoord1f: { args: [FFIType.f32], returns: FFIType.void },
+    glEvalCoord1fv: { args: [FFIType.ptr], returns: FFIType.void },
+    glEvalCoord2d: { args: [FFIType.f64, FFIType.f64], returns: FFIType.void },
+    glEvalCoord2dv: { args: [FFIType.ptr], returns: FFIType.void },
+    glEvalCoord2f: { args: [FFIType.f32, FFIType.f32], returns: FFIType.void },
+    glEvalCoord2fv: { args: [FFIType.ptr], returns: FFIType.void },
+    glEvalMesh1: { args: [FFIType.u32, FFIType.i32, FFIType.i32], returns: FFIType.void },
+    glEvalMesh2: { args: [FFIType.u32, FFIType.i32, FFIType.i32, FFIType.i32, FFIType.i32], returns: FFIType.void },
+    glEvalPoint1: { args: [FFIType.i32], returns: FFIType.void },
+    glEvalPoint2: { args: [FFIType.i32, FFIType.i32], returns: FFIType.void },
+    glFeedbackBuffer: { args: [FFIType.i32, FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glFinish: { args: [], returns: FFIType.void },
+    glFlush: { args: [], returns: FFIType.void },
+    glFogf: { args: [FFIType.u32, FFIType.f32], returns: FFIType.void },
+    glFogfv: { args: [FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glFogi: { args: [FFIType.u32, FFIType.i32], returns: FFIType.void },
+    glFogiv: { args: [FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glFrontFace: { args: [FFIType.u32], returns: FFIType.void },
+    glFrustum: { args: [FFIType.f64, FFIType.f64, FFIType.f64, FFIType.f64, FFIType.f64, FFIType.f64], returns: FFIType.void },
+    glGenLists: { args: [FFIType.i32], returns: FFIType.u32 },
+    glGenTextures: { args: [FFIType.i32, FFIType.ptr], returns: FFIType.void },
+    glGetBooleanv: { args: [FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glGetClipPlane: { args: [FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glGetDoublev: { args: [FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glGetError: { args: [], returns: FFIType.u32 },
+    glGetFloatv: { args: [FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glGetIntegerv: { args: [FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glGetLightfv: { args: [FFIType.u32, FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glGetLightiv: { args: [FFIType.u32, FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glGetMapdv: { args: [FFIType.u32, FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glGetMapfv: { args: [FFIType.u32, FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glGetMapiv: { args: [FFIType.u32, FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glGetMaterialfv: { args: [FFIType.u32, FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glGetMaterialiv: { args: [FFIType.u32, FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glGetPixelMapfv: { args: [FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glGetPixelMapuiv: { args: [FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glGetPixelMapusv: { args: [FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glGetPointerv: { args: [FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glGetPolygonStipple: { args: [FFIType.ptr], returns: FFIType.void },
+    glGetString: { args: [FFIType.u32], returns: FFIType.ptr },
+    glGetTexEnvfv: { args: [FFIType.u32, FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glGetTexEnviv: { args: [FFIType.u32, FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glGetTexGendv: { args: [FFIType.u32, FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glGetTexGenfv: { args: [FFIType.u32, FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glGetTexGeniv: { args: [FFIType.u32, FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glGetTexImage: { args: [FFIType.u32, FFIType.i32, FFIType.u32, FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glGetTexLevelParameterfv: { args: [FFIType.u32, FFIType.i32, FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glGetTexLevelParameteriv: { args: [FFIType.u32, FFIType.i32, FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glGetTexParameterfv: { args: [FFIType.u32, FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glGetTexParameteriv: { args: [FFIType.u32, FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glHint: { args: [FFIType.u32, FFIType.u32], returns: FFIType.void },
+    glIndexd: { args: [FFIType.f64], returns: FFIType.void },
+    glIndexdv: { args: [FFIType.ptr], returns: FFIType.void },
+    glIndexf: { args: [FFIType.f32], returns: FFIType.void },
+    glIndexfv: { args: [FFIType.ptr], returns: FFIType.void },
+    glIndexi: { args: [FFIType.i32], returns: FFIType.void },
+    glIndexiv: { args: [FFIType.ptr], returns: FFIType.void },
+    glIndexMask: { args: [FFIType.u32], returns: FFIType.void },
+    glIndexPointer: { args: [FFIType.u32, FFIType.i32, FFIType.ptr], returns: FFIType.void },
+    glIndexs: { args: [FFIType.i16], returns: FFIType.void },
+    glIndexsv: { args: [FFIType.ptr], returns: FFIType.void },
+    glIndexub: { args: [FFIType.u8], returns: FFIType.void },
+    glIndexubv: { args: [FFIType.ptr], returns: FFIType.void },
+    glInitNames: { args: [], returns: FFIType.void },
+    glInterleavedArrays: { args: [FFIType.u32, FFIType.i32, FFIType.ptr], returns: FFIType.void },
+    glIsEnabled: { args: [FFIType.u32], returns: FFIType.u8 },
+    glIsList: { args: [FFIType.u32], returns: FFIType.u8 },
+    glIsTexture: { args: [FFIType.u32], returns: FFIType.u8 },
+    glLightf: { args: [FFIType.u32, FFIType.u32, FFIType.f32], returns: FFIType.void },
+    glLightfv: { args: [FFIType.u32, FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glLighti: { args: [FFIType.u32, FFIType.u32, FFIType.i32], returns: FFIType.void },
+    glLightiv: { args: [FFIType.u32, FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glLightModelf: { args: [FFIType.u32, FFIType.f32], returns: FFIType.void },
+    glLightModelfv: { args: [FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glLightModeli: { args: [FFIType.u32, FFIType.i32], returns: FFIType.void },
+    glLightModeliv: { args: [FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glLineStipple: { args: [FFIType.i32, FFIType.u16], returns: FFIType.void },
+    glLineWidth: { args: [FFIType.f32], returns: FFIType.void },
+    glListBase: { args: [FFIType.u32], returns: FFIType.void },
+    glLoadIdentity: { args: [], returns: FFIType.void },
+    glLoadMatrixd: { args: [FFIType.ptr], returns: FFIType.void },
+    glLoadMatrixf: { args: [FFIType.ptr], returns: FFIType.void },
+    glLoadName: { args: [FFIType.u32], returns: FFIType.void },
+    glLogicOp: { args: [FFIType.u32], returns: FFIType.void },
+    glMap1d: { args: [FFIType.u32, FFIType.f64, FFIType.f64, FFIType.i32, FFIType.i32, FFIType.ptr], returns: FFIType.void },
+    glMap1f: { args: [FFIType.u32, FFIType.f32, FFIType.f32, FFIType.i32, FFIType.i32, FFIType.ptr], returns: FFIType.void },
+    glMap2d: { args: [FFIType.u32, FFIType.f64, FFIType.f64, FFIType.i32, FFIType.i32, FFIType.f64, FFIType.f64, FFIType.i32, FFIType.i32, FFIType.ptr], returns: FFIType.void }, // prettier-ignore
+    glMap2f: { args: [FFIType.u32, FFIType.f32, FFIType.f32, FFIType.i32, FFIType.i32, FFIType.f32, FFIType.f32, FFIType.i32, FFIType.i32, FFIType.ptr], returns: FFIType.void }, // prettier-ignore
+    glMapGrid1d: { args: [FFIType.i32, FFIType.f64, FFIType.f64], returns: FFIType.void },
+    glMapGrid1f: { args: [FFIType.i32, FFIType.f32, FFIType.f32], returns: FFIType.void },
+    glMapGrid2d: { args: [FFIType.i32, FFIType.f64, FFIType.f64, FFIType.i32, FFIType.f64, FFIType.f64], returns: FFIType.void },
+    glMapGrid2f: { args: [FFIType.i32, FFIType.f32, FFIType.f32, FFIType.i32, FFIType.f32, FFIType.f32], returns: FFIType.void },
+    glMaterialf: { args: [FFIType.u32, FFIType.u32, FFIType.f32], returns: FFIType.void },
+    glMaterialfv: { args: [FFIType.u32, FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glMateriali: { args: [FFIType.u32, FFIType.u32, FFIType.i32], returns: FFIType.void },
+    glMaterialiv: { args: [FFIType.u32, FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glMatrixMode: { args: [FFIType.u32], returns: FFIType.void },
+    glMultMatrixd: { args: [FFIType.ptr], returns: FFIType.void },
+    glMultMatrixf: { args: [FFIType.ptr], returns: FFIType.void },
+    glNewList: { args: [FFIType.u32, FFIType.u32], returns: FFIType.void },
+    glNormal3b: { args: [FFIType.i8, FFIType.i8, FFIType.i8], returns: FFIType.void },
+    glNormal3bv: { args: [FFIType.ptr], returns: FFIType.void },
+    glNormal3d: { args: [FFIType.f64, FFIType.f64, FFIType.f64], returns: FFIType.void },
+    glNormal3dv: { args: [FFIType.ptr], returns: FFIType.void },
+    glNormal3f: { args: [FFIType.f32, FFIType.f32, FFIType.f32], returns: FFIType.void },
+    glNormal3fv: { args: [FFIType.ptr], returns: FFIType.void },
+    glNormal3i: { args: [FFIType.i32, FFIType.i32, FFIType.i32], returns: FFIType.void },
+    glNormal3iv: { args: [FFIType.ptr], returns: FFIType.void },
+    glNormal3s: { args: [FFIType.i16, FFIType.i16, FFIType.i16], returns: FFIType.void },
+    glNormal3sv: { args: [FFIType.ptr], returns: FFIType.void },
+    glNormalPointer: { args: [FFIType.u32, FFIType.i32, FFIType.ptr], returns: FFIType.void },
+    glOrtho: { args: [FFIType.f64, FFIType.f64, FFIType.f64, FFIType.f64, FFIType.f64, FFIType.f64], returns: FFIType.void },
+    glPassThrough: { args: [FFIType.f32], returns: FFIType.void },
+    glPixelMapfv: { args: [FFIType.u32, FFIType.i32, FFIType.ptr], returns: FFIType.void },
+    glPixelMapuiv: { args: [FFIType.u32, FFIType.i32, FFIType.ptr], returns: FFIType.void },
+    glPixelMapusv: { args: [FFIType.u32, FFIType.i32, FFIType.ptr], returns: FFIType.void },
+    glPixelStoref: { args: [FFIType.u32, FFIType.f32], returns: FFIType.void },
+    glPixelStorei: { args: [FFIType.u32, FFIType.i32], returns: FFIType.void },
+    glPixelTransferf: { args: [FFIType.u32, FFIType.f32], returns: FFIType.void },
+    glPixelTransferi: { args: [FFIType.u32, FFIType.i32], returns: FFIType.void },
+    glPixelZoom: { args: [FFIType.f32, FFIType.f32], returns: FFIType.void },
+    glPointSize: { args: [FFIType.f32], returns: FFIType.void },
+    glPolygonMode: { args: [FFIType.u32, FFIType.u32], returns: FFIType.void },
+    glPolygonOffset: { args: [FFIType.f32, FFIType.f32], returns: FFIType.void },
+    glPolygonStipple: { args: [FFIType.ptr], returns: FFIType.void },
+    glPopAttrib: { args: [], returns: FFIType.void },
+    glPopClientAttrib: { args: [], returns: FFIType.void },
+    glPopMatrix: { args: [], returns: FFIType.void },
+    glPopName: { args: [], returns: FFIType.void },
+    glPrioritizeTextures: { args: [FFIType.i32, FFIType.ptr, FFIType.ptr], returns: FFIType.void },
+    glPushAttrib: { args: [FFIType.u32], returns: FFIType.void },
+    glPushClientAttrib: { args: [FFIType.u32], returns: FFIType.void },
+    glPushMatrix: { args: [], returns: FFIType.void },
+    glPushName: { args: [FFIType.u32], returns: FFIType.void },
+    glRasterPos2d: { args: [FFIType.f64, FFIType.f64], returns: FFIType.void },
+    glRasterPos2dv: { args: [FFIType.ptr], returns: FFIType.void },
+    glRasterPos2f: { args: [FFIType.f32, FFIType.f32], returns: FFIType.void },
+    glRasterPos2fv: { args: [FFIType.ptr], returns: FFIType.void },
+    glRasterPos2i: { args: [FFIType.i32, FFIType.i32], returns: FFIType.void },
+    glRasterPos2iv: { args: [FFIType.ptr], returns: FFIType.void },
+    glRasterPos2s: { args: [FFIType.i16, FFIType.i16], returns: FFIType.void },
+    glRasterPos2sv: { args: [FFIType.ptr], returns: FFIType.void },
+    glRasterPos3d: { args: [FFIType.f64, FFIType.f64, FFIType.f64], returns: FFIType.void },
+    glRasterPos3dv: { args: [FFIType.ptr], returns: FFIType.void },
+    glRasterPos3f: { args: [FFIType.f32, FFIType.f32, FFIType.f32], returns: FFIType.void },
+    glRasterPos3fv: { args: [FFIType.ptr], returns: FFIType.void },
+    glRasterPos3i: { args: [FFIType.i32, FFIType.i32, FFIType.i32], returns: FFIType.void },
+    glRasterPos3iv: { args: [FFIType.ptr], returns: FFIType.void },
+    glRasterPos3s: { args: [FFIType.i16, FFIType.i16, FFIType.i16], returns: FFIType.void },
+    glRasterPos3sv: { args: [FFIType.ptr], returns: FFIType.void },
+    glRasterPos4d: { args: [FFIType.f64, FFIType.f64, FFIType.f64, FFIType.f64], returns: FFIType.void },
+    glRasterPos4dv: { args: [FFIType.ptr], returns: FFIType.void },
+    glRasterPos4f: { args: [FFIType.f32, FFIType.f32, FFIType.f32, FFIType.f32], returns: FFIType.void },
+    glRasterPos4fv: { args: [FFIType.ptr], returns: FFIType.void },
+    glRasterPos4i: { args: [FFIType.i32, FFIType.i32, FFIType.i32, FFIType.i32], returns: FFIType.void },
+    glRasterPos4iv: { args: [FFIType.ptr], returns: FFIType.void },
+    glRasterPos4s: { args: [FFIType.i16, FFIType.i16, FFIType.i16, FFIType.i16], returns: FFIType.void },
+    glRasterPos4sv: { args: [FFIType.ptr], returns: FFIType.void },
+    glReadBuffer: { args: [FFIType.u32], returns: FFIType.void },
+    glReadPixels: { args: [FFIType.i32, FFIType.i32, FFIType.i32, FFIType.i32, FFIType.u32, FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glRectd: { args: [FFIType.f64, FFIType.f64, FFIType.f64, FFIType.f64], returns: FFIType.void },
+    glRectdv: { args: [FFIType.ptr, FFIType.ptr], returns: FFIType.void },
+    glRectf: { args: [FFIType.f32, FFIType.f32, FFIType.f32, FFIType.f32], returns: FFIType.void },
+    glRectfv: { args: [FFIType.ptr, FFIType.ptr], returns: FFIType.void },
+    glRecti: { args: [FFIType.i32, FFIType.i32, FFIType.i32, FFIType.i32], returns: FFIType.void },
+    glRectiv: { args: [FFIType.ptr, FFIType.ptr], returns: FFIType.void },
+    glRects: { args: [FFIType.i16, FFIType.i16, FFIType.i16, FFIType.i16], returns: FFIType.void },
+    glRectsv: { args: [FFIType.ptr, FFIType.ptr], returns: FFIType.void },
+    glRenderMode: { args: [FFIType.u32], returns: FFIType.i32 },
+    glRotated: { args: [FFIType.f64, FFIType.f64, FFIType.f64, FFIType.f64], returns: FFIType.void },
+    glRotatef: { args: [FFIType.f32, FFIType.f32, FFIType.f32, FFIType.f32], returns: FFIType.void },
+    glScaled: { args: [FFIType.f64, FFIType.f64, FFIType.f64], returns: FFIType.void },
+    glScalef: { args: [FFIType.f32, FFIType.f32, FFIType.f32], returns: FFIType.void },
+    glScissor: { args: [FFIType.i32, FFIType.i32, FFIType.i32, FFIType.i32], returns: FFIType.void },
+    glSelectBuffer: { args: [FFIType.i32, FFIType.ptr], returns: FFIType.void },
+    glShadeModel: { args: [FFIType.u32], returns: FFIType.void },
+    glStencilFunc: { args: [FFIType.u32, FFIType.i32, FFIType.u32], returns: FFIType.void },
+    glStencilMask: { args: [FFIType.u32], returns: FFIType.void },
+    glStencilOp: { args: [FFIType.u32, FFIType.u32, FFIType.u32], returns: FFIType.void },
+    glTexCoord1d: { args: [FFIType.f64], returns: FFIType.void },
+    glTexCoord1dv: { args: [FFIType.ptr], returns: FFIType.void },
+    glTexCoord1f: { args: [FFIType.f32], returns: FFIType.void },
+    glTexCoord1fv: { args: [FFIType.ptr], returns: FFIType.void },
+    glTexCoord1i: { args: [FFIType.i32], returns: FFIType.void },
+    glTexCoord1iv: { args: [FFIType.ptr], returns: FFIType.void },
+    glTexCoord1s: { args: [FFIType.i16], returns: FFIType.void },
+    glTexCoord1sv: { args: [FFIType.ptr], returns: FFIType.void },
+    glTexCoord2d: { args: [FFIType.f64, FFIType.f64], returns: FFIType.void },
+    glTexCoord2dv: { args: [FFIType.ptr], returns: FFIType.void },
+    glTexCoord2f: { args: [FFIType.f32, FFIType.f32], returns: FFIType.void },
+    glTexCoord2fv: { args: [FFIType.ptr], returns: FFIType.void },
+    glTexCoord2i: { args: [FFIType.i32, FFIType.i32], returns: FFIType.void },
+    glTexCoord2iv: { args: [FFIType.ptr], returns: FFIType.void },
+    glTexCoord2s: { args: [FFIType.i16, FFIType.i16], returns: FFIType.void },
+    glTexCoord2sv: { args: [FFIType.ptr], returns: FFIType.void },
+    glTexCoord3d: { args: [FFIType.f64, FFIType.f64, FFIType.f64], returns: FFIType.void },
+    glTexCoord3dv: { args: [FFIType.ptr], returns: FFIType.void },
+    glTexCoord3f: { args: [FFIType.f32, FFIType.f32, FFIType.f32], returns: FFIType.void },
+    glTexCoord3fv: { args: [FFIType.ptr], returns: FFIType.void },
+    glTexCoord3i: { args: [FFIType.i32, FFIType.i32, FFIType.i32], returns: FFIType.void },
+    glTexCoord3iv: { args: [FFIType.ptr], returns: FFIType.void },
+    glTexCoord3s: { args: [FFIType.i16, FFIType.i16, FFIType.i16], returns: FFIType.void },
+    glTexCoord3sv: { args: [FFIType.ptr], returns: FFIType.void },
+    glTexCoord4d: { args: [FFIType.f64, FFIType.f64, FFIType.f64, FFIType.f64], returns: FFIType.void },
+    glTexCoord4dv: { args: [FFIType.ptr], returns: FFIType.void },
+    glTexCoord4f: { args: [FFIType.f32, FFIType.f32, FFIType.f32, FFIType.f32], returns: FFIType.void },
+    glTexCoord4fv: { args: [FFIType.ptr], returns: FFIType.void },
+    glTexCoord4i: { args: [FFIType.i32, FFIType.i32, FFIType.i32, FFIType.i32], returns: FFIType.void },
+    glTexCoord4iv: { args: [FFIType.ptr], returns: FFIType.void },
+    glTexCoord4s: { args: [FFIType.i16, FFIType.i16, FFIType.i16, FFIType.i16], returns: FFIType.void },
+    glTexCoord4sv: { args: [FFIType.ptr], returns: FFIType.void },
+    glTexCoordPointer: { args: [FFIType.i32, FFIType.u32, FFIType.i32, FFIType.ptr], returns: FFIType.void },
+    glTexEnvf: { args: [FFIType.u32, FFIType.u32, FFIType.f32], returns: FFIType.void },
+    glTexEnvfv: { args: [FFIType.u32, FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glTexEnvi: { args: [FFIType.u32, FFIType.u32, FFIType.i32], returns: FFIType.void },
+    glTexEnviv: { args: [FFIType.u32, FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glTexGend: { args: [FFIType.u32, FFIType.u32, FFIType.f64], returns: FFIType.void },
+    glTexGendv: { args: [FFIType.u32, FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glTexGenf: { args: [FFIType.u32, FFIType.u32, FFIType.f32], returns: FFIType.void },
+    glTexGenfv: { args: [FFIType.u32, FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glTexGeni: { args: [FFIType.u32, FFIType.u32, FFIType.i32], returns: FFIType.void },
+    glTexGeniv: { args: [FFIType.u32, FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glTexImage1D: { args: [FFIType.u32, FFIType.i32, FFIType.i32, FFIType.i32, FFIType.i32, FFIType.u32, FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glTexImage2D: { args: [FFIType.u32, FFIType.i32, FFIType.i32, FFIType.i32, FFIType.i32, FFIType.i32, FFIType.u32, FFIType.u32, FFIType.ptr], returns: FFIType.void }, // prettier-ignore
+    glTexParameterf: { args: [FFIType.u32, FFIType.u32, FFIType.f32], returns: FFIType.void },
+    glTexParameterfv: { args: [FFIType.u32, FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glTexParameteri: { args: [FFIType.u32, FFIType.u32, FFIType.i32], returns: FFIType.void },
+    glTexParameteriv: { args: [FFIType.u32, FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glTexSubImage1D: { args: [FFIType.u32, FFIType.i32, FFIType.i32, FFIType.i32, FFIType.u32, FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glTexSubImage2D: { args: [FFIType.u32, FFIType.i32, FFIType.i32, FFIType.i32, FFIType.i32, FFIType.i32, FFIType.u32, FFIType.u32, FFIType.ptr], returns: FFIType.void }, // prettier-ignore
+    glTranslated: { args: [FFIType.f64, FFIType.f64, FFIType.f64], returns: FFIType.void },
+    glTranslatef: { args: [FFIType.f32, FFIType.f32, FFIType.f32], returns: FFIType.void },
+    glVertex2d: { args: [FFIType.f64, FFIType.f64], returns: FFIType.void },
+    glVertex2dv: { args: [FFIType.ptr], returns: FFIType.void },
+    glVertex2f: { args: [FFIType.f32, FFIType.f32], returns: FFIType.void },
+    glVertex2fv: { args: [FFIType.ptr], returns: FFIType.void },
+    glVertex2i: { args: [FFIType.i32, FFIType.i32], returns: FFIType.void },
+    glVertex2iv: { args: [FFIType.ptr], returns: FFIType.void },
+    glVertex2s: { args: [FFIType.i16, FFIType.i16], returns: FFIType.void },
+    glVertex2sv: { args: [FFIType.ptr], returns: FFIType.void },
+    glVertex3d: { args: [FFIType.f64, FFIType.f64, FFIType.f64], returns: FFIType.void },
+    glVertex3dv: { args: [FFIType.ptr], returns: FFIType.void },
+    glVertex3f: { args: [FFIType.f32, FFIType.f32, FFIType.f32], returns: FFIType.void },
+    glVertex3fv: { args: [FFIType.ptr], returns: FFIType.void },
+    glVertex3i: { args: [FFIType.i32, FFIType.i32, FFIType.i32], returns: FFIType.void },
+    glVertex3iv: { args: [FFIType.ptr], returns: FFIType.void },
+    glVertex3s: { args: [FFIType.i16, FFIType.i16, FFIType.i16], returns: FFIType.void },
+    glVertex3sv: { args: [FFIType.ptr], returns: FFIType.void },
+    glVertex4d: { args: [FFIType.f64, FFIType.f64, FFIType.f64, FFIType.f64], returns: FFIType.void },
+    glVertex4dv: { args: [FFIType.ptr], returns: FFIType.void },
+    glVertex4f: { args: [FFIType.f32, FFIType.f32, FFIType.f32, FFIType.f32], returns: FFIType.void },
+    glVertex4fv: { args: [FFIType.ptr], returns: FFIType.void },
+    glVertex4i: { args: [FFIType.i32, FFIType.i32, FFIType.i32, FFIType.i32], returns: FFIType.void },
+    glVertex4iv: { args: [FFIType.ptr], returns: FFIType.void },
+    glVertex4s: { args: [FFIType.i16, FFIType.i16, FFIType.i16, FFIType.i16], returns: FFIType.void },
+    glVertex4sv: { args: [FFIType.ptr], returns: FFIType.void },
+    glVertexPointer: { args: [FFIType.i32, FFIType.u32, FFIType.i32, FFIType.ptr], returns: FFIType.void },
+    glViewport: { args: [FFIType.i32, FFIType.i32, FFIType.i32, FFIType.i32], returns: FFIType.void },
+    wglChoosePixelFormat: { args: [FFIType.ptr, FFIType.ptr], returns: FFIType.i32 },
+    wglCopyContext: { args: [FFIType.ptr, FFIType.ptr, FFIType.u32], returns: FFIType.i32 },
+    wglCreateContext: { args: [FFIType.ptr], returns: FFIType.ptr },
+    wglCreateLayerContext: { args: [FFIType.ptr, FFIType.i32], returns: FFIType.ptr },
+    wglDeleteContext: { args: [FFIType.ptr], returns: FFIType.i32 },
+    wglDescribeLayerPlane: { args: [FFIType.ptr, FFIType.i32, FFIType.i32, FFIType.u32, FFIType.ptr], returns: FFIType.i32 },
+    wglDescribePixelFormat: { args: [FFIType.ptr, FFIType.i32, FFIType.u32, FFIType.ptr], returns: FFIType.i32 },
+    wglGetCurrentContext: { args: [], returns: FFIType.ptr },
+    wglGetCurrentDC: { args: [], returns: FFIType.ptr },
+    wglGetDefaultProcAddress: { args: [FFIType.ptr], returns: FFIType.ptr },
+    wglGetLayerPaletteEntries: { args: [FFIType.ptr, FFIType.i32, FFIType.i32, FFIType.i32, FFIType.ptr], returns: FFIType.i32 },
+    wglGetProcAddress: { args: [FFIType.ptr], returns: FFIType.ptr },
+    wglMakeCurrent: { args: [FFIType.ptr, FFIType.ptr], returns: FFIType.i32 },
+    wglRealizeLayerPalette: { args: [FFIType.ptr, FFIType.i32, FFIType.i32], returns: FFIType.i32 },
+    wglSetLayerPaletteEntries: { args: [FFIType.ptr, FFIType.i32, FFIType.i32, FFIType.i32, FFIType.ptr], returns: FFIType.i32 },
+    wglSetPixelFormat: { args: [FFIType.ptr, FFIType.i32, FFIType.ptr], returns: FFIType.i32 },
+    wglShareLists: { args: [FFIType.ptr, FFIType.ptr], returns: FFIType.i32 },
+    wglSwapBuffers: { args: [FFIType.ptr], returns: FFIType.i32 },
+    wglSwapLayerBuffers: { args: [FFIType.ptr, FFIType.u32], returns: FFIType.i32 },
+    wglSwapMultipleBuffers: { args: [FFIType.u32, FFIType.ptr], returns: FFIType.u32 },
+    wglUseFontBitmapsA: { args: [FFIType.ptr, FFIType.u32, FFIType.u32, FFIType.u32], returns: FFIType.i32 },
+    wglUseFontBitmapsW: { args: [FFIType.ptr, FFIType.u32, FFIType.u32, FFIType.u32], returns: FFIType.i32 },
+    wglUseFontOutlinesA: { args: [FFIType.ptr, FFIType.u32, FFIType.u32, FFIType.u32, FFIType.f32, FFIType.f32, FFIType.i32, FFIType.ptr], returns: FFIType.i32 },
+    wglUseFontOutlinesW: { args: [FFIType.ptr, FFIType.u32, FFIType.u32, FFIType.u32, FFIType.f32, FFIType.f32, FFIType.i32, FFIType.ptr], returns: FFIType.i32 },
+  } as const;
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glaccum
+  public static glAccum(op: GLenum, value: GLfloat): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glalphafunc
+  public static glAlphaFunc(func: GLenum, ref: GLclampf): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glaretexturesresident
+  public static glAreTexturesResident(n: GLsizei, textures: GLuint_, residences: GLboolean_): GLboolean {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glarrayelement
+  public static glArrayElement(i: GLint): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glbegin
+  public static glBegin(mode: GLenum): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glbindtexture
+  public static glBindTexture(target: GLenum, texture: GLuint): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glbitmap
+  public static glBitmap(width: GLsizei, height: GLsizei, xorig: GLfloat, yorig: GLfloat, xmove: GLfloat, ymove: GLfloat, bitmap: GLubyte_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glblendfunc
+  public static glBlendFunc(sfactor: GLenum, dfactor: GLenum): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glcalllist
+  public static glCallList(list: GLuint): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glcalllists
+  public static glCallLists(n: GLsizei, type: GLenum, lists: GLvoid_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glclear
+  public static glClear(mask: GLbitfield): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glclearaccum
+  public static glClearAccum(red: GLfloat, green: GLfloat, blue: GLfloat, alpha: GLfloat): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glclearcolor
+  public static glClearColor(red: GLclampf, green: GLclampf, blue: GLclampf, alpha: GLclampf): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glcleardepth
+  public static glClearDepth(depth: GLclampd): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glclearindex
+  public static glClearIndex(c: GLfloat): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glclearstencil
+  public static glClearStencil(s: GLint): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glclipplane
+  public static glClipPlane(plane: GLenum, equation: GLdouble_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glcolor3b
+  public static glColor3b(red: GLbyte, green: GLbyte, blue: GLbyte): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glcolor3bv
+  public static glColor3bv(v: GLbyte_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glcolor3d
+  public static glColor3d(red: GLdouble, green: GLdouble, blue: GLdouble): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glcolor3dv
+  public static glColor3dv(v: GLdouble_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glcolor3f
+  public static glColor3f(red: GLfloat, green: GLfloat, blue: GLfloat): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glcolor3fv
+  public static glColor3fv(v: GLfloat_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glcolor3i
+  public static glColor3i(red: GLint, green: GLint, blue: GLint): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glcolor3iv
+  public static glColor3iv(v: GLint_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glcolor3s
+  public static glColor3s(red: GLshort, green: GLshort, blue: GLshort): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glcolor3sv
+  public static glColor3sv(v: GLshort_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glcolor3ub
+  public static glColor3ub(red: GLubyte, green: GLubyte, blue: GLubyte): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glcolor3ubv
+  public static glColor3ubv(v: GLubyte_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glcolor3ui
+  public static glColor3ui(red: GLuint, green: GLuint, blue: GLuint): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glcolor3uiv
+  public static glColor3uiv(v: GLuint_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glcolor3us
+  public static glColor3us(red: GLushort, green: GLushort, blue: GLushort): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glcolor3usv
+  public static glColor3usv(v: GLushort_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glcolor4b
+  public static glColor4b(red: GLbyte, green: GLbyte, blue: GLbyte, alpha: GLbyte): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glcolor4bv
+  public static glColor4bv(v: GLbyte_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glcolor4d
+  public static glColor4d(red: GLdouble, green: GLdouble, blue: GLdouble, alpha: GLdouble): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glcolor4dv
+  public static glColor4dv(v: GLdouble_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glcolor4f
+  public static glColor4f(red: GLfloat, green: GLfloat, blue: GLfloat, alpha: GLfloat): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glcolor4fv
+  public static glColor4fv(v: GLfloat_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glcolor4i
+  public static glColor4i(red: GLint, green: GLint, blue: GLint, alpha: GLint): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glcolor4iv
+  public static glColor4iv(v: GLint_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glcolor4s
+  public static glColor4s(red: GLshort, green: GLshort, blue: GLshort, alpha: GLshort): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glcolor4sv
+  public static glColor4sv(v: GLshort_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glcolor4ub
+  public static glColor4ub(red: GLubyte, green: GLubyte, blue: GLubyte, alpha: GLubyte): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glcolor4ubv
+  public static glColor4ubv(v: GLubyte_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glcolor4ui
+  public static glColor4ui(red: GLuint, green: GLuint, blue: GLuint, alpha: GLuint): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glcolor4uiv
+  public static glColor4uiv(v: GLuint_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glcolor4us
+  public static glColor4us(red: GLushort, green: GLushort, blue: GLushort, alpha: GLushort): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glcolor4usv
+  public static glColor4usv(v: GLushort_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glcolormask
+  public static glColorMask(red: GLboolean, green: GLboolean, blue: GLboolean, alpha: GLboolean): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glcolormaterial
+  public static glColorMaterial(face: GLenum, mode: GLenum): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glcolorpointer
+  public static glColorPointer(size: GLint, type: GLenum, stride: GLsizei, pointer: GLvoid_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glcopypixels
+  public static glCopyPixels(x: GLint, y: GLint, width: GLsizei, height: GLsizei, type: GLenum): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glcopyteximage1d
+  public static glCopyTexImage1D(target: GLenum, level: GLint, internalformat: GLenum, x: GLint, y: GLint, width: GLsizei, border: GLint): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glcopyteximage2d
+  public static glCopyTexImage2D(target: GLenum, level: GLint, internalformat: GLenum, x: GLint, y: GLint, width: GLsizei, height: GLsizei, border: GLint): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glcopytexsubimage1d
+  public static glCopyTexSubImage1D(target: GLenum, level: GLint, xoffset: GLint, x: GLint, y: GLint, width: GLsizei): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glcopytexsubimage2d
+  public static glCopyTexSubImage2D(target: GLenum, level: GLint, xoffset: GLint, yoffset: GLint, x: GLint, y: GLint, width: GLsizei, height: GLsizei): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glcullface
+  public static glCullFace(mode: GLenum): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gldeletelists
+  public static glDeleteLists(list: GLuint, range: GLsizei): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gldeletetextures
+  public static glDeleteTextures(n: GLsizei, textures: GLuint_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gldepthfunc
+  public static glDepthFunc(func: GLenum): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gldepthmask
+  public static glDepthMask(flag: GLboolean): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gldepthrange
+  public static glDepthRange(zNear: GLclampd, zFar: GLclampd): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gldisable
+  public static glDisable(cap: GLenum): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gldisableclientstate
+  public static glDisableClientState(array: GLenum): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gldrawarrays
+  public static glDrawArrays(mode: GLenum, first: GLint, count: GLsizei): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gldrawbuffer
+  public static glDrawBuffer(mode: GLenum): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gldrawelements
+  public static glDrawElements(mode: GLenum, count: GLsizei, type: GLenum, indices: GLvoid_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gldrawpixels
+  public static glDrawPixels(width: GLsizei, height: GLsizei, format: GLenum, type: GLenum, pixels: GLvoid_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gledgeflag
+  public static glEdgeFlag(flag: GLboolean): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gledgeflagpointer
+  public static glEdgeFlagPointer(stride: GLsizei, pointer: GLvoid_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gledgeflagv
+  public static glEdgeFlagv(flag: GLboolean_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glenable
+  public static glEnable(cap: GLenum): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glenableclientstate
+  public static glEnableClientState(array: GLenum): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glend
+  public static glEnd(): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glendlist
+  public static glEndList(): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glevalcoord1d
+  public static glEvalCoord1d(u: GLdouble): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glevalcoord1dv
+  public static glEvalCoord1dv(u: GLdouble_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glevalcoord1f
+  public static glEvalCoord1f(u: GLfloat): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glevalcoord1fv
+  public static glEvalCoord1fv(u: GLfloat_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glevalcoord2d
+  public static glEvalCoord2d(u: GLdouble, v: GLdouble): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glevalcoord2dv
+  public static glEvalCoord2dv(u: GLdouble_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glevalcoord2f
+  public static glEvalCoord2f(u: GLfloat, v: GLfloat): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glevalcoord2fv
+  public static glEvalCoord2fv(u: GLfloat_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glevalmesh1
+  public static glEvalMesh1(mode: GLenum, i1: GLint, i2: GLint): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glevalmesh2
+  public static glEvalMesh2(mode: GLenum, i1: GLint, i2: GLint, j1: GLint, j2: GLint): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glevalpoint1
+  public static glEvalPoint1(i: GLint): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glevalpoint2
+  public static glEvalPoint2(i: GLint, j: GLint): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glfeedbackbuffer
+  public static glFeedbackBuffer(size: GLsizei, type: GLenum, buffer: GLfloat_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glfinish
+  public static glFinish(): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glflush
+  public static glFlush(): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glfogf
+  public static glFogf(pname: GLenum, param: GLfloat): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glfogfv
+  public static glFogfv(pname: GLenum, params: GLfloat_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glfogi
+  public static glFogi(pname: GLenum, param: GLint): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glfogiv
+  public static glFogiv(pname: GLenum, params: GLint_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glfrontface
+  public static glFrontFace(mode: GLenum): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glfrustum
+  public static glFrustum(left: GLdouble, right: GLdouble, bottom: GLdouble, top: GLdouble, zNear: GLdouble, zFar: GLdouble): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glgenlists
+  public static glGenLists(range: GLsizei): GLuint {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glgentextures
+  public static glGenTextures(n: GLsizei, textures: GLuint_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glgetbooleanv
+  public static glGetBooleanv(pname: GLenum, params: GLboolean_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glgetclipplane
+  public static glGetClipPlane(plane: GLenum, equation: GLdouble_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glgetdoublev
+  public static glGetDoublev(pname: GLenum, params: GLdouble_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glgeterror
+  public static glGetError(): GLenum {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glgetfloatv
+  public static glGetFloatv(pname: GLenum, params: GLfloat_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glgetintegerv
+  public static glGetIntegerv(pname: GLenum, params: GLint_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glgetlightfv
+  public static glGetLightfv(light: GLenum, pname: GLenum, params: GLfloat_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glgetlightiv
+  public static glGetLightiv(light: GLenum, pname: GLenum, params: GLint_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glgetmapdv
+  public static glGetMapdv(target: GLenum, query: GLenum, v: GLdouble_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glgetmapfv
+  public static glGetMapfv(target: GLenum, query: GLenum, v: GLfloat_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glgetmapiv
+  public static glGetMapiv(target: GLenum, query: GLenum, v: GLint_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glgetmaterialfv
+  public static glGetMaterialfv(face: GLenum, pname: GLenum, params: GLfloat_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glgetmaterialiv
+  public static glGetMaterialiv(face: GLenum, pname: GLenum, params: GLint_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glgetpixelmapfv
+  public static glGetPixelMapfv(map: GLenum, values: GLfloat_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glgetpixelmapuiv
+  public static glGetPixelMapuiv(map: GLenum, values: GLuint_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glgetpixelmapusv
+  public static glGetPixelMapusv(map: GLenum, values: GLushort_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glgetpointerv
+  public static glGetPointerv(pname: GLenum, params: GLvoid_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glgetpolygonstipple
+  public static glGetPolygonStipple(mask: GLubyte_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glgetstring
+  public static glGetString(name: GLenum): GLubyte_ {
+    throw new Error('OpenGL32 has not been initialized…');
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glgettexenvfv
+  public static glGetTexEnvfv(target: GLenum, pname: GLenum, params: GLfloat_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glAlphaFunc(func: GLenum, ref: GLclampf): void {
-    return (this._glAlphaFunc ??= load('glAlphaFunc', { args: [u32, f32], returns: voidType }))(func, ref);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glgettexenviv
+  public static glGetTexEnviv(target: GLenum, pname: GLenum, params: GLint_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glAreTexturesResident(n: GLsizei, textures: GLuint_, residences: GLboolean_): GLboolean {
-    return (this._glAreTexturesResident ??= load('glAreTexturesResident', { args: [i32, ptr, ptr], returns: u8 }))(n, textures, residences);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glgettexgendv
+  public static glGetTexGendv(coord: GLenum, pname: GLenum, params: GLdouble_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glArrayElement(index: GLint): void {
-    return (this._glArrayElement ??= load('glArrayElement', { args: [i32], returns: voidType }))(index);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glgettexgenfv
+  public static glGetTexGenfv(coord: GLenum, pname: GLenum, params: GLfloat_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glBegin(mode: GLenum): void {
-    return (this._glBegin ??= load('glBegin', { args: [u32], returns: voidType }))(mode);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glgettexgeniv
+  public static glGetTexGeniv(coord: GLenum, pname: GLenum, params: GLint_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glBindTexture(target: GLenum, texture: GLuint): void {
-    return (this._glBindTexture ??= load('glBindTexture', { args: [u32, u32], returns: voidType }))(target, texture);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glgetteximage
+  public static glGetTexImage(target: GLenum, level: GLint, format: GLenum, type: GLenum, pixels: GLvoid_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glBitmap(width: GLsizei, height: GLsizei, xorig: GLfloat, yorig: GLfloat, xmove: GLfloat, ymove: GLfloat, bitmap: GLubyte_): void {
-    return (this._glBitmap ??= load('glBitmap', { args: [i32, i32, f32, f32, f32, f32, ptr], returns: voidType }))(width, height, xorig, yorig, xmove, ymove, bitmap);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glgettexlevelparameterfv
+  public static glGetTexLevelParameterfv(target: GLenum, level: GLint, pname: GLenum, params: GLfloat_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glBlendFunc(sfactor: GLenum, dfactor: GLenum): void {
-    return (this._glBlendFunc ??= load('glBlendFunc', { args: [u32, u32], returns: voidType }))(sfactor, dfactor);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glgettexlevelparameteriv
+  public static glGetTexLevelParameteriv(target: GLenum, level: GLint, pname: GLenum, params: GLint_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glCallList(list: GLuint): void {
-    return (this._glCallList ??= load('glCallList', { args: [u32], returns: voidType }))(list);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glgettexparameterfv
+  public static glGetTexParameterfv(target: GLenum, pname: GLenum, params: GLfloat_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glCallLists(n: GLsizei, type: GLenum, lists: GLvoid_): void {
-    return (this._glCallLists ??= load('glCallLists', { args: [i32, u32, ptr], returns: voidType }))(n, type, lists);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glgettexparameteriv
+  public static glGetTexParameteriv(target: GLenum, pname: GLenum, params: GLint_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glClear(mask: GLbitfield): void {
-    return (this._glClear ??= load('glClear', { args: [u32], returns: voidType }))(mask);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glhint
+  public static glHint(target: GLenum, mode: GLenum): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glClearAccum(red: GLfloat, green: GLfloat, blue: GLfloat, alpha: GLfloat): void {
-    return (this._glClearAccum ??= load('glClearAccum', { args: [f32, f32, f32, f32], returns: voidType }))(red, green, blue, alpha);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glindexmask
+  public static glIndexMask(mask: GLuint): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glClearColor(red: GLclampf, green: GLclampf, blue: GLclampf, alpha: GLclampf): void {
-    return (this._glClearColor ??= load('glClearColor', { args: [f32, f32, f32, f32], returns: voidType }))(red, green, blue, alpha);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glindexpointer
+  public static glIndexPointer(type: GLenum, stride: GLsizei, pointer: GLvoid_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glClearDepth(depth: GLclampd): void {
-    return (this._glClearDepth ??= load('glClearDepth', { args: [f64], returns: voidType }))(depth);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glindexd
+  public static glIndexd(c: GLdouble): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glClearIndex(c: GLfloat): void {
-    return (this._glClearIndex ??= load('glClearIndex', { args: [f32], returns: voidType }))(c);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glindexdv
+  public static glIndexdv(c: GLdouble_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glClearStencil(s: GLint): void {
-    return (this._glClearStencil ??= load('glClearStencil', { args: [i32], returns: voidType }))(s);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glindexf
+  public static glIndexf(c: GLfloat): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glClipPlane(plane: GLenum, equation: GLdouble_): void {
-    return (this._glClipPlane ??= load('glClipPlane', { args: [u32, ptr], returns: voidType }))(plane, equation);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glindexfv
+  public static glIndexfv(c: GLfloat_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glColorMask(red: GLboolean, green: GLboolean, blue: GLboolean, alpha: GLboolean): void {
-    return (this._glColorMask ??= load('glColorMask', { args: [u8, u8, u8, u8], returns: voidType }))(red, green, blue, alpha);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glindexi
+  public static glIndexi(c: GLint): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glColorMaterial(face: GLenum, mode: GLenum): void {
-    return (this._glColorMaterial ??= load('glColorMaterial', { args: [u32, u32], returns: voidType }))(face, mode);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glindexiv
+  public static glIndexiv(c: GLint_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glColorPointer(size: GLint, type: GLenum, stride: GLsizei, pointer: GLvoid_): void {
-    return (this._glColorPointer ??= load('glColorPointer', { args: [i32, u32, i32, ptr], returns: voidType }))(size, type, stride, pointer);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glindexs
+  public static glIndexs(c: GLshort): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glCopyPixels(x: GLint, y: GLint, width: GLsizei, height: GLsizei, type: GLenum): void {
-    return (this._glCopyPixels ??= load('glCopyPixels', { args: [i32, i32, i32, i32, u32], returns: voidType }))(x, y, width, height, type);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glindexsv
+  public static glIndexsv(c: GLshort_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glCopyTexImage1D(target: GLenum, level: GLint, internalformat: GLenum, x: GLint, y: GLint, width: GLsizei, border: GLint): void {
-    return (this._glCopyTexImage1D ??= load('glCopyTexImage1D', { args: [u32, i32, u32, i32, i32, i32, i32], returns: voidType }))(target, level, internalformat, x, y, width, border);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glindexub
+  public static glIndexub(c: GLubyte): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glCopyTexImage2D(target: GLenum, level: GLint, internalformat: GLenum, x: GLint, y: GLint, width: GLsizei, height: GLsizei, border: GLint): void {
-    return (this._glCopyTexImage2D ??= load('glCopyTexImage2D', { args: [u32, i32, u32, i32, i32, i32, i32, i32], returns: voidType }))(target, level, internalformat, x, y, width, height, border);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glindexubv
+  public static glIndexubv(c: GLubyte_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glCopyTexSubImage1D(target: GLenum, level: GLint, xoffset: GLint, x: GLint, y: GLint, width: GLsizei): void {
-    return (this._glCopyTexSubImage1D ??= load('glCopyTexSubImage1D', { args: [u32, i32, i32, i32, i32, i32], returns: voidType }))(target, level, xoffset, x, y, width);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glinitnames
+  public static glInitNames(): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glCopyTexSubImage2D(target: GLenum, level: GLint, xoffset: GLint, yoffset: GLint, x: GLint, y: GLint, width: GLsizei, height: GLsizei): void {
-    return (this._glCopyTexSubImage2D ??= load('glCopyTexSubImage2D', { args: [u32, i32, i32, i32, i32, i32, i32, i32], returns: voidType }))(target, level, xoffset, yoffset, x, y, width, height);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glinterleavedarrays
+  public static glInterleavedArrays(format: GLenum, stride: GLsizei, pointer: GLvoid_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glCullFace(mode: GLenum): void {
-    return (this._glCullFace ??= load('glCullFace', { args: [u32], returns: voidType }))(mode);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glisenabled
+  public static glIsEnabled(cap: GLenum): GLboolean {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glDeleteLists(list: GLuint, range: GLsizei): void {
-    return (this._glDeleteLists ??= load('glDeleteLists', { args: [u32, i32], returns: voidType }))(list, range);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glislist
+  public static glIsList(list: GLuint): GLboolean {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glDeleteTextures(n: GLsizei, textures: GLuint_): void {
-    return (this._glDeleteTextures ??= load('glDeleteTextures', { args: [i32, ptr], returns: voidType }))(n, textures);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glistexture
+  public static glIsTexture(texture: GLuint): GLboolean {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glDepthFunc(func: GLenum): void {
-    return (this._glDepthFunc ??= load('glDepthFunc', { args: [u32], returns: voidType }))(func);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gllightmodelf
+  public static glLightModelf(pname: GLenum, param: GLfloat): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glDepthMask(flag: GLboolean): void {
-    return (this._glDepthMask ??= load('glDepthMask', { args: [u8], returns: voidType }))(flag);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gllightmodelfv
+  public static glLightModelfv(pname: GLenum, params: GLfloat_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glDepthRange(zNear: GLclampd, zFar: GLclampd): void {
-    return (this._glDepthRange ??= load('glDepthRange', { args: [f64, f64], returns: voidType }))(zNear, zFar);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gllightmodeli
+  public static glLightModeli(pname: GLenum, param: GLint): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glDisable(cap: GLenum): void {
-    return (this._glDisable ??= load('glDisable', { args: [u32], returns: voidType }))(cap);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gllightmodeliv
+  public static glLightModeliv(pname: GLenum, params: GLint_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glDisableClientState(array: GLenum): void {
-    return (this._glDisableClientState ??= load('glDisableClientState', { args: [u32], returns: voidType }))(array);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gllightf
+  public static glLightf(light: GLenum, pname: GLenum, param: GLfloat): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glDrawArrays(mode: GLenum, first: GLint, count: GLsizei): void {
-    return (this._glDrawArrays ??= load('glDrawArrays', { args: [u32, i32, i32], returns: voidType }))(mode, first, count);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gllightfv
+  public static glLightfv(light: GLenum, pname: GLenum, params: GLfloat_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glDrawBuffer(mode: GLenum): void {
-    return (this._glDrawBuffer ??= load('glDrawBuffer', { args: [u32], returns: voidType }))(mode);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gllighti
+  public static glLighti(light: GLenum, pname: GLenum, param: GLint): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glDrawElements(mode: GLenum, count: GLsizei, type: GLenum, indices: GLvoid_): void {
-    return (this._glDrawElements ??= load('glDrawElements', { args: [u32, i32, u32, ptr], returns: voidType }))(mode, count, type, indices);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gllightiv
+  public static glLightiv(light: GLenum, pname: GLenum, params: GLint_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glDrawPixels(width: GLsizei, height: GLsizei, format: GLenum, type: GLenum, pixels: GLvoid_): void {
-    return (this._glDrawPixels ??= load('glDrawPixels', { args: [i32, i32, u32, u32, ptr], returns: voidType }))(width, height, format, type, pixels);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gllinestipple
+  public static glLineStipple(factor: GLint, pattern: GLushort): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glEdgeFlag(flag: GLboolean): void {
-    return (this._glEdgeFlag ??= load('glEdgeFlag', { args: [u8], returns: voidType }))(flag);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gllinewidth
+  public static glLineWidth(width: GLfloat): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glEdgeFlagPointer(stride: GLsizei, pointer: GLvoid_): void {
-    return (this._glEdgeFlagPointer ??= load('glEdgeFlagPointer', { args: [i32, ptr], returns: voidType }))(stride, pointer);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gllistbase
+  public static glListBase(base: GLuint): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glEdgeFlagv(flag: GLboolean_): void {
-    return (this._glEdgeFlagv ??= load('glEdgeFlagv', { args: [ptr], returns: voidType }))(flag);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glloadidentity
+  public static glLoadIdentity(): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glEnable(cap: GLenum): void {
-    return (this._glEnable ??= load('glEnable', { args: [u32], returns: voidType }))(cap);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glloadmatrixd
+  public static glLoadMatrixd(m: GLdouble_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glEnableClientState(array: GLenum): void {
-    return (this._glEnableClientState ??= load('glEnableClientState', { args: [u32], returns: voidType }))(array);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glloadmatrixf
+  public static glLoadMatrixf(m: GLfloat_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glEnd(): void {
-    return (this._glEnd ??= load('glEnd', { args: [], returns: voidType }))();
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glloadname
+  public static glLoadName(name: GLuint): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glEndList(): void {
-    return (this._glEndList ??= load('glEndList', { args: [], returns: voidType }))();
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gllogicop
+  public static glLogicOp(opcode: GLenum): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glFeedbackBuffer(size: GLsizei, type: GLenum, buffer: GLfloat_): void {
-    return (this._glFeedbackBuffer ??= load('glFeedbackBuffer', { args: [i32, u32, ptr], returns: voidType }))(size, type, buffer);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glmap1d
+  public static glMap1d(target: GLenum, u1: GLdouble, u2: GLdouble, stride: GLint, order: GLint, points: GLdouble_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glFinish(): void {
-    return (this._glFinish ??= load('glFinish', { args: [], returns: voidType }))();
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glmap1f
+  public static glMap1f(target: GLenum, u1: GLfloat, u2: GLfloat, stride: GLint, order: GLint, points: GLfloat_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glFlush(): void {
-    return (this._glFlush ??= load('glFlush', { args: [], returns: voidType }))();
+  // prettier-ignore
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glmap2d
+  public static glMap2d(target: GLenum, u1: GLdouble, u2: GLdouble, ustride: GLint, uorder: GLint, v1: GLdouble, v2: GLdouble, vstride: GLint, vorder: GLint, points: GLdouble_): void { 
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glFogf(pname: GLenum, param: GLfloat): void {
-    return (this._glFogf ??= load('glFogf', { args: [u32, f32], returns: voidType }))(pname, param);
+  // prettier-ignore
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glmap2f
+  public static glMap2f(target: GLenum, u1: GLfloat, u2: GLfloat, ustride: GLint, uorder: GLint, v1: GLfloat, v2: GLfloat, vstride: GLint, vorder: GLint, points: GLfloat_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glFogfv(pname: GLenum, params: GLfloat_): void {
-    return (this._glFogfv ??= load('glFogfv', { args: [u32, ptr], returns: voidType }))(pname, params);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glmapgrid1d
+  public static glMapGrid1d(un: GLint, u1: GLdouble, u2: GLdouble): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glFogi(pname: GLenum, param: GLint): void {
-    return (this._glFogi ??= load('glFogi', { args: [u32, i32], returns: voidType }))(pname, param);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glmapgrid1f
+  public static glMapGrid1f(un: GLint, u1: GLfloat, u2: GLfloat): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glFogiv(pname: GLenum, params: GLint_): void {
-    return (this._glFogiv ??= load('glFogiv', { args: [u32, ptr], returns: voidType }))(pname, params);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glmapgrid2d
+  public static glMapGrid2d(un: GLint, u1: GLdouble, u2: GLdouble, vn: GLint, v1: GLdouble, v2: GLdouble): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glFrontFace(mode: GLenum): void {
-    return (this._glFrontFace ??= load('glFrontFace', { args: [u32], returns: voidType }))(mode);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glmapgrid2f
+  public static glMapGrid2f(un: GLint, u1: GLfloat, u2: GLfloat, vn: GLint, v1: GLfloat, v2: GLfloat): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glFrustum(left: GLdouble, right: GLdouble, bottom: GLdouble, top: GLdouble, zNear: GLdouble, zFar: GLdouble): void {
-    return (this._glFrustum ??= load('glFrustum', { args: [f64, f64, f64, f64, f64, f64], returns: voidType }))(left, right, bottom, top, zNear, zFar);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glmaterialf
+  public static glMaterialf(face: GLenum, pname: GLenum, param: GLfloat): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glGenLists(range: GLsizei): GLuint {
-    return (this._glGenLists ??= load('glGenLists', { args: [i32], returns: u32 }))(range);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glmaterialfv
+  public static glMaterialfv(face: GLenum, pname: GLenum, params: GLfloat_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glGenTextures(n: GLsizei, textures: GLuint_): void {
-    return (this._glGenTextures ??= load('glGenTextures', { args: [i32, ptr], returns: voidType }))(n, textures);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glmateriali
+  public static glMateriali(face: GLenum, pname: GLenum, param: GLint): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glGetBooleanv(pname: GLenum, params: GLboolean_): void {
-    return (this._glGetBooleanv ??= load('glGetBooleanv', { args: [u32, ptr], returns: voidType }))(pname, params);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glmaterialiv
+  public static glMaterialiv(face: GLenum, pname: GLenum, params: GLint_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glGetClipPlane(plane: GLenum, equation: GLdouble_): void {
-    return (this._glGetClipPlane ??= load('glGetClipPlane', { args: [u32, ptr], returns: voidType }))(plane, equation);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glmatrixmode
+  public static glMatrixMode(mode: GLenum): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glGetDoublev(pname: GLenum, params: GLdouble_): void {
-    return (this._glGetDoublev ??= load('glGetDoublev', { args: [u32, ptr], returns: voidType }))(pname, params);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glmultmatrixd
+  public static glMultMatrixd(m: GLdouble_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glGetError(): GLenum {
-    return (this._glGetError ??= load('glGetError', { args: [], returns: u32 }))();
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glmultmatrixf
+  public static glMultMatrixf(m: GLfloat_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glGetFloatv(pname: GLenum, params: GLfloat_): void {
-    return (this._glGetFloatv ??= load('glGetFloatv', { args: [u32, ptr], returns: voidType }))(pname, params);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glnewlist
+  public static glNewList(list: GLuint, mode: GLenum): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glGetIntegerv(pname: GLenum, params: GLint_): void {
-    return (this._glGetIntegerv ??= load('glGetIntegerv', { args: [u32, ptr], returns: voidType }))(pname, params);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glnormal3b
+  public static glNormal3b(nx: GLbyte, ny: GLbyte, nz: GLbyte): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glGetLightfv(light: GLenum, pname: GLenum, params: GLfloat_): void {
-    return (this._glGetLightfv ??= load('glGetLightfv', { args: [u32, u32, ptr], returns: voidType }))(light, pname, params);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glnormal3bv
+  public static glNormal3bv(v: GLbyte_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glGetLightiv(light: GLenum, pname: GLenum, params: GLint_): void {
-    return (this._glGetLightiv ??= load('glGetLightiv', { args: [u32, u32, ptr], returns: voidType }))(light, pname, params);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glnormal3d
+  public static glNormal3d(nx: GLdouble, ny: GLdouble, nz: GLdouble): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glGetMapdv(target: GLenum, query: GLenum, v: GLdouble_): void {
-    return (this._glGetMapdv ??= load('glGetMapdv', { args: [u32, u32, ptr], returns: voidType }))(target, query, v);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glnormal3dv
+  public static glNormal3dv(v: GLdouble_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glGetMapfv(target: GLenum, query: GLenum, v: GLfloat_): void {
-    return (this._glGetMapfv ??= load('glGetMapfv', { args: [u32, u32, ptr], returns: voidType }))(target, query, v);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glnormal3f
+  public static glNormal3f(nx: GLfloat, ny: GLfloat, nz: GLfloat): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glGetMapiv(target: GLenum, query: GLenum, v: GLint_): void {
-    return (this._glGetMapiv ??= load('glGetMapiv', { args: [u32, u32, ptr], returns: voidType }))(target, query, v);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glnormal3fv
+  public static glNormal3fv(v: GLfloat_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glGetMaterialfv(face: GLenum, pname: GLenum, params: GLfloat_): void {
-    return (this._glGetMaterialfv ??= load('glGetMaterialfv', { args: [u32, u32, ptr], returns: voidType }))(face, pname, params);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glnormal3i
+  public static glNormal3i(nx: GLint, ny: GLint, nz: GLint): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glGetMaterialiv(face: GLenum, pname: GLenum, params: GLint_): void {
-    return (this._glGetMaterialiv ??= load('glGetMaterialiv', { args: [u32, u32, ptr], returns: voidType }))(face, pname, params);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glnormal3iv
+  public static glNormal3iv(v: GLint_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glGetPixelMapfv(map: GLenum, values: GLfloat_): void {
-    return (this._glGetPixelMapfv ??= load('glGetPixelMapfv', { args: [u32, ptr], returns: voidType }))(map, values);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glnormal3s
+  public static glNormal3s(nx: GLshort, ny: GLshort, nz: GLshort): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glGetPixelMapuiv(map: GLenum, values: GLuint_): void {
-    return (this._glGetPixelMapuiv ??= load('glGetPixelMapuiv', { args: [u32, ptr], returns: voidType }))(map, values);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glnormal3sv
+  public static glNormal3sv(v: GLshort_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glGetPixelMapusv(map: GLenum, values: GLushort_): void {
-    return (this._glGetPixelMapusv ??= load('glGetPixelMapusv', { args: [u32, ptr], returns: voidType }))(map, values);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glnormalpointer
+  public static glNormalPointer(type: GLenum, stride: GLsizei, pointer: GLvoid_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glGetPointerv(pname: GLenum, params: GLvoid_): void {
-    return (this._glGetPointerv ??= load('glGetPointerv', { args: [u32, ptr], returns: voidType }))(pname, params);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glortho
+  public static glOrtho(left: GLdouble, right: GLdouble, bottom: GLdouble, top: GLdouble, zNear: GLdouble, zFar: GLdouble): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glGetPolygonStipple(mask: GLubyte_): void {
-    return (this._glGetPolygonStipple ??= load('glGetPolygonStipple', { args: [ptr], returns: voidType }))(mask);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glpassthrough
+  public static glPassThrough(token: GLfloat): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glGetString(name: GLenum): GLubyte_ {
-    // @ts-ignore
-    return (this._glGetString ??= load('glGetString', { args: [u32], returns: ptr }))(name);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glpixelmapfv
+  public static glPixelMapfv(map: GLenum, mapsize: GLsizei, values: GLfloat_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glGetTexEnvfv(target: GLenum, pname: GLenum, params: GLfloat_): void {
-    return (this._glGetTexEnvfv ??= load('glGetTexEnvfv', { args: [u32, u32, ptr], returns: voidType }))(target, pname, params);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glpixelmapuiv
+  public static glPixelMapuiv(map: GLenum, mapsize: GLsizei, values: GLuint_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glGetTexEnviv(target: GLenum, pname: GLenum, params: GLint_): void {
-    return (this._glGetTexEnviv ??= load('glGetTexEnviv', { args: [u32, u32, ptr], returns: voidType }))(target, pname, params);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glpixelmapusv
+  public static glPixelMapusv(map: GLenum, mapsize: GLsizei, values: GLushort_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glGetTexGendv(coord: GLenum, pname: GLenum, params: GLdouble_): void {
-    return (this._glGetTexGendv ??= load('glGetTexGendv', { args: [u32, u32, ptr], returns: voidType }))(coord, pname, params);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glpixelstoref
+  public static glPixelStoref(pname: GLenum, param: GLfloat): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glGetTexGenfv(coord: GLenum, pname: GLenum, params: GLfloat_): void {
-    return (this._glGetTexGenfv ??= load('glGetTexGenfv', { args: [u32, u32, ptr], returns: voidType }))(coord, pname, params);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glpixelstorei
+  public static glPixelStorei(pname: GLenum, param: GLint): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glGetTexGeniv(coord: GLenum, pname: GLenum, params: GLint_): void {
-    return (this._glGetTexGeniv ??= load('glGetTexGeniv', { args: [u32, u32, ptr], returns: voidType }))(coord, pname, params);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glpixeltransferf
+  public static glPixelTransferf(pname: GLenum, param: GLfloat): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glGetTexImage(target: GLenum, level: GLint, format: GLenum, type: GLenum, pixels: GLvoid_): void {
-    return (this._glGetTexImage ??= load('glGetTexImage', { args: [u32, i32, u32, u32, ptr], returns: voidType }))(target, level, format, type, pixels);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glpixeltransferi
+  public static glPixelTransferi(pname: GLenum, param: GLint): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glGetTexLevelParameterfv(target: GLenum, level: GLint, pname: GLenum, params: GLfloat_): void {
-    return (this._glGetTexLevelParameterfv ??= load('glGetTexLevelParameterfv', { args: [u32, i32, u32, ptr], returns: voidType }))(target, level, pname, params);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glpixelzoom
+  public static glPixelZoom(xfactor: GLfloat, yfactor: GLfloat): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glGetTexLevelParameteriv(target: GLenum, level: GLint, pname: GLenum, params: GLint_): void {
-    return (this._glGetTexLevelParameteriv ??= load('glGetTexLevelParameteriv', { args: [u32, i32, u32, ptr], returns: voidType }))(target, level, pname, params);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glpointsize
+  public static glPointSize(size: GLfloat): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glGetTexParameterfv(target: GLenum, pname: GLenum, params: GLfloat_): void {
-    return (this._glGetTexParameterfv ??= load('glGetTexParameterfv', { args: [u32, u32, ptr], returns: voidType }))(target, pname, params);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glpolygonmode
+  public static glPolygonMode(face: GLenum, mode: GLenum): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glGetTexParameteriv(target: GLenum, pname: GLenum, params: GLint_): void {
-    return (this._glGetTexParameteriv ??= load('glGetTexParameteriv', { args: [u32, u32, ptr], returns: voidType }))(target, pname, params);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glpolygonoffset
+  public static glPolygonOffset(factor: GLfloat, units: GLfloat): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glHint(target: GLenum, mode: GLenum): void {
-    return (this._glHint ??= load('glHint', { args: [u32, u32], returns: voidType }))(target, mode);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glpolygonstipple
+  public static glPolygonStipple(mask: GLubyte_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glIndexMask(mask: GLuint): void {
-    return (this._glIndexMask ??= load('glIndexMask', { args: [u32], returns: voidType }))(mask);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glpopattrib
+  public static glPopAttrib(): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glIndexPointer(type: GLenum, stride: GLsizei, pointer: GLvoid_): void {
-    return (this._glIndexPointer ??= load('glIndexPointer', { args: [u32, i32, ptr], returns: voidType }))(type, stride, pointer);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glpopclientattrib
+  public static glPopClientAttrib(): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glIndexd(c: GLdouble): void {
-    return (this._glIndexd ??= load('glIndexd', { args: [f64], returns: voidType }))(c);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glpopmatrix
+  public static glPopMatrix(): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glIndexf(c: GLfloat): void {
-    return (this._glIndexf ??= load('glIndexf', { args: [f32], returns: voidType }))(c);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glpopname
+  public static glPopName(): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glIndexi(c: GLint): void {
-    return (this._glIndexi ??= load('glIndexi', { args: [i32], returns: voidType }))(c);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glprioritizetextures
+  public static glPrioritizeTextures(n: GLsizei, textures: GLuint_, priorities: GLclampf_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glIndexs(c: number): void {
-    return (this._glIndexs ??= load('glIndexs', { args: [i16], returns: voidType }))(c);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glpushattrib
+  public static glPushAttrib(mask: GLbitfield): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glInitNames(): void {
-    return (this._glInitNames ??= load('glInitNames', { args: [], returns: voidType }))();
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glpushclientattrib
+  public static glPushClientAttrib(mask: GLbitfield): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glInterleavedArrays(format: GLenum, stride: GLsizei, pointer: GLvoid_): void {
-    return (this._glInterleavedArrays ??= load('glInterleavedArrays', { args: [u32, i32, ptr], returns: voidType }))(format, stride, pointer);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glpushmatrix
+  public static glPushMatrix(): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glIsEnabled(cap: GLenum): GLboolean {
-    return (this._glIsEnabled ??= load('glIsEnabled', { args: [u32], returns: u8 }))(cap);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glpushname
+  public static glPushName(name: GLuint): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glIsList(list: GLuint): GLboolean {
-    return (this._glIsList ??= load('glIsList', { args: [u32], returns: u8 }))(list);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glrasterpos2d
+  public static glRasterPos2d(x: GLdouble, y: GLdouble): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glIsTexture(texture: GLuint): GLboolean {
-    return (this._glIsTexture ??= load('glIsTexture', { args: [u32], returns: u8 }))(texture);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glrasterpos2dv
+  public static glRasterPos2dv(v: GLdouble_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glLightModelf(pname: GLenum, param: GLfloat): void {
-    return (this._glLightModelf ??= load('glLightModelf', { args: [u32, f32], returns: voidType }))(pname, param);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glrasterpos2f
+  public static glRasterPos2f(x: GLfloat, y: GLfloat): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glLightModelfv(pname: GLenum, params: GLfloat_): void {
-    return (this._glLightModelfv ??= load('glLightModelfv', { args: [u32, ptr], returns: voidType }))(pname, params);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glrasterpos2fv
+  public static glRasterPos2fv(v: GLfloat_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glLightModeli(pname: GLenum, param: GLint): void {
-    return (this._glLightModeli ??= load('glLightModeli', { args: [u32, i32], returns: voidType }))(pname, param);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glrasterpos2i
+  public static glRasterPos2i(x: GLint, y: GLint): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glLightModeliv(pname: GLenum, params: GLint_): void {
-    return (this._glLightModeliv ??= load('glLightModeliv', { args: [u32, ptr], returns: voidType }))(pname, params);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glrasterpos2iv
+  public static glRasterPos2iv(v: GLint_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glLightf(light: GLenum, pname: GLenum, param: GLfloat): void {
-    return (this._glLightf ??= load('glLightf', { args: [u32, u32, f32], returns: voidType }))(light, pname, param);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glrasterpos2s
+  public static glRasterPos2s(x: GLshort, y: GLshort): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glLightfv(light: GLenum, pname: GLenum, params: GLfloat_): void {
-    return (this._glLightfv ??= load('glLightfv', { args: [u32, u32, ptr], returns: voidType }))(light, pname, params);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glrasterpos2sv
+  public static glRasterPos2sv(v: GLshort_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glLighti(light: GLenum, pname: GLenum, param: GLint): void {
-    return (this._glLighti ??= load('glLighti', { args: [u32, u32, i32], returns: voidType }))(light, pname, param);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glrasterpos3d
+  public static glRasterPos3d(x: GLdouble, y: GLdouble, z: GLdouble): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glLightiv(light: GLenum, pname: GLenum, params: GLint_): void {
-    return (this._glLightiv ??= load('glLightiv', { args: [u32, u32, ptr], returns: voidType }))(light, pname, params);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glrasterpos3dv
+  public static glRasterPos3dv(v: GLdouble_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glLineStipple(factor: GLint, pattern: number): void {
-    return (this._glLineStipple ??= load('glLineStipple', { args: [i32, u16], returns: voidType }))(factor, pattern);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glrasterpos3f
+  public static glRasterPos3f(x: GLfloat, y: GLfloat, z: GLfloat): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glLineWidth(width: GLfloat): void {
-    return (this._glLineWidth ??= load('glLineWidth', { args: [f32], returns: voidType }))(width);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glrasterpos3fv
+  public static glRasterPos3fv(v: GLfloat_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glListBase(base: GLuint): void {
-    return (this._glListBase ??= load('glListBase', { args: [u32], returns: voidType }))(base);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glrasterpos3i
+  public static glRasterPos3i(x: GLint, y: GLint, z: GLint): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glLoadIdentity(): void {
-    return (this._glLoadIdentity ??= load('glLoadIdentity', { args: [], returns: voidType }))();
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glrasterpos3iv
+  public static glRasterPos3iv(v: GLint_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glLoadMatrixd(m: GLdouble_): void {
-    return (this._glLoadMatrixd ??= load('glLoadMatrixd', { args: [ptr], returns: voidType }))(m);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glrasterpos3s
+  public static glRasterPos3s(x: GLshort, y: GLshort, z: GLshort): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glLoadMatrixf(m: GLfloat_): void {
-    return (this._glLoadMatrixf ??= load('glLoadMatrixf', { args: [ptr], returns: voidType }))(m);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glrasterpos3sv
+  public static glRasterPos3sv(v: GLshort_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glLoadName(name: GLuint): void {
-    return (this._glLoadName ??= load('glLoadName', { args: [u32], returns: voidType }))(name);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glrasterpos4d
+  public static glRasterPos4d(x: GLdouble, y: GLdouble, z: GLdouble, w: GLdouble): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glLogicOp(opcode: GLenum): void {
-    return (this._glLogicOp ??= load('glLogicOp', { args: [u32], returns: voidType }))(opcode);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glrasterpos4dv
+  public static glRasterPos4dv(v: GLdouble_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glMap1d(target: GLenum, u1: GLdouble, u2: GLdouble, stride: GLint, order: GLint, points: GLdouble_): void {
-    return (this._glMap1d ??= load('glMap1d', { args: [u32, f64, f64, i32, i32, ptr], returns: voidType }))(target, u1, u2, stride, order, points);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glrasterpos4f
+  public static glRasterPos4f(x: GLfloat, y: GLfloat, z: GLfloat, w: GLfloat): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glMap1f(target: GLenum, u1: GLfloat, u2: GLfloat, stride: GLint, order: GLint, points: GLfloat_): void {
-    return (this._glMap1f ??= load('glMap1f', { args: [u32, f32, f32, i32, i32, ptr], returns: voidType }))(target, u1, u2, stride, order, points);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glrasterpos4fv
+  public static glRasterPos4fv(v: GLfloat_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glMap2d(target: GLenum, u1: GLdouble, u2: GLdouble, ustride: GLint, uorder: GLint, v1: GLdouble, v2: GLdouble, vstride: GLint, vorder: GLint, points: GLdouble_): void {
-    return (this._glMap2d ??= load('glMap2d', { args: [u32, f64, f64, i32, i32, f64, f64, i32, i32, ptr], returns: voidType }))(target, u1, u2, ustride, uorder, v1, v2, vstride, vorder, points);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glrasterpos4i
+  public static glRasterPos4i(x: GLint, y: GLint, z: GLint, w: GLint): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glMap2f(target: GLenum, u1: GLfloat, u2: GLfloat, ustride: GLint, uorder: GLint, v1: GLfloat, v2: GLfloat, vstride: GLint, vorder: GLint, points: GLfloat_): void {
-    return (this._glMap2f ??= load('glMap2f', { args: [u32, f32, f32, i32, i32, f32, f32, i32, i32, ptr], returns: voidType }))(target, u1, u2, ustride, uorder, v1, v2, vstride, vorder, points);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glrasterpos4iv
+  public static glRasterPos4iv(v: GLint_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glMapGrid1d(un: GLint, u1: GLdouble, u2: GLdouble): void {
-    return (this._glMapGrid1d ??= load('glMapGrid1d', { args: [i32, f64, f64], returns: voidType }))(un, u1, u2);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glrasterpos4s
+  public static glRasterPos4s(x: GLshort, y: GLshort, z: GLshort, w: GLshort): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glMapGrid1f(un: GLint, u1: GLfloat, u2: GLfloat): void {
-    return (this._glMapGrid1f ??= load('glMapGrid1f', { args: [i32, f32, f32], returns: voidType }))(un, u1, u2);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glrasterpos4sv
+  public static glRasterPos4sv(v: GLshort_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glMapGrid2d(un: GLint, u1: GLdouble, u2: GLdouble, vn: GLint, v1: GLdouble, v2: GLdouble): void {
-    return (this._glMapGrid2d ??= load('glMapGrid2d', { args: [i32, f64, f64, i32, f64, f64], returns: voidType }))(un, u1, u2, vn, v1, v2);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glreadbuffer
+  public static glReadBuffer(mode: GLenum): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glMapGrid2f(un: GLint, u1: GLfloat, u2: GLfloat, vn: GLint, v1: GLfloat, v2: GLfloat): void {
-    return (this._glMapGrid2f ??= load('glMapGrid2f', { args: [i32, f32, f32, i32, f32, f32], returns: voidType }))(un, u1, u2, vn, v1, v2);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glreadpixels
+  public static glReadPixels(x: GLint, y: GLint, width: GLsizei, height: GLsizei, format: GLenum, type: GLenum, pixels: GLvoid_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glMaterialf(face: GLenum, pname: GLenum, param: GLfloat): void {
-    return (this._glMaterialf ??= load('glMaterialf', { args: [u32, u32, f32], returns: voidType }))(face, pname, param);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glrectd
+  public static glRectd(x1: GLdouble, y1: GLdouble, x2: GLdouble, y2: GLdouble): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glMaterialfv(face: GLenum, pname: GLenum, params: GLfloat_): void {
-    return (this._glMaterialfv ??= load('glMaterialfv', { args: [u32, u32, ptr], returns: voidType }))(face, pname, params);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glrectdv
+  public static glRectdv(v1: GLdouble_, v2: GLdouble_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glMateriali(face: GLenum, pname: GLenum, param: GLint): void {
-    return (this._glMateriali ??= load('glMateriali', { args: [u32, u32, i32], returns: voidType }))(face, pname, param);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glrectf
+  public static glRectf(x1: GLfloat, y1: GLfloat, x2: GLfloat, y2: GLfloat): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glMaterialiv(face: GLenum, pname: GLenum, params: GLint_): void {
-    return (this._glMaterialiv ??= load('glMaterialiv', { args: [u32, u32, ptr], returns: voidType }))(face, pname, params);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glrectfv
+  public static glRectfv(v1: GLfloat_, v2: GLfloat_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glMatrixMode(mode: GLenum): void {
-    return (this._glMatrixMode ??= load('glMatrixMode', { args: [u32], returns: voidType }))(mode);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glrecti
+  public static glRecti(x1: GLint, y1: GLint, x2: GLint, y2: GLint): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glMultMatrixd(m: GLdouble_): void {
-    return (this._glMultMatrixd ??= load('glMultMatrixd', { args: [ptr], returns: voidType }))(m);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glrectiv
+  public static glRectiv(v1: GLint_, v2: GLint_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glMultMatrixf(m: GLfloat_): void {
-    return (this._glMultMatrixf ??= load('glMultMatrixf', { args: [ptr], returns: voidType }))(m);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glrects
+  public static glRects(x1: GLshort, y1: GLshort, x2: GLshort, y2: GLshort): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glNewList(list: GLuint, mode: GLenum): void {
-    return (this._glNewList ??= load('glNewList', { args: [u32, u32], returns: voidType }))(list, mode);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glrectsv
+  public static glRectsv(v1: GLshort_, v2: GLshort_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glNormal3f(nx: GLfloat, ny: GLfloat, nz: GLfloat): void {
-    return (this._glNormal3f ??= load('glNormal3f', { args: [f32, f32, f32], returns: voidType }))(nx, ny, nz);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glrendermode
+  public static glRenderMode(mode: GLenum): GLint {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glNormalPointer(type: GLenum, stride: GLsizei, pointer: GLvoid_): void {
-    return (this._glNormalPointer ??= load('glNormalPointer', { args: [u32, i32, ptr], returns: voidType }))(type, stride, pointer);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glrotated
+  public static glRotated(angle: GLdouble, x: GLdouble, y: GLdouble, z: GLdouble): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glOrtho(left: GLdouble, right: GLdouble, bottom: GLdouble, top: GLdouble, zNear: GLdouble, zFar: GLdouble): void {
-    return (this._glOrtho ??= load('glOrtho', { args: [f64, f64, f64, f64, f64, f64], returns: voidType }))(left, right, bottom, top, zNear, zFar);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glrotatef
+  public static glRotatef(angle: GLfloat, x: GLfloat, y: GLfloat, z: GLfloat): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glPassThrough(token: GLfloat): void {
-    return (this._glPassThrough ??= load('glPassThrough', { args: [f32], returns: voidType }))(token);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glscaled
+  public static glScaled(x: GLdouble, y: GLdouble, z: GLdouble): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glPixelMapfv(map: GLenum, mapsize: GLsizei, values: GLfloat_): void {
-    return (this._glPixelMapfv ??= load('glPixelMapfv', { args: [u32, i32, ptr], returns: voidType }))(map, mapsize, values);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glscalef
+  public static glScalef(x: GLfloat, y: GLfloat, z: GLfloat): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glPixelMapuiv(map: GLenum, mapsize: GLsizei, values: GLuint_): void {
-    return (this._glPixelMapuiv ??= load('glPixelMapuiv', { args: [u32, i32, ptr], returns: voidType }))(map, mapsize, values);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glscissor
+  public static glScissor(x: GLint, y: GLint, width: GLsizei, height: GLsizei): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glPixelMapusv(map: GLenum, mapsize: GLsizei, values: GLushort_): void {
-    return (this._glPixelMapusv ??= load('glPixelMapusv', { args: [u32, i32, ptr], returns: voidType }))(map, mapsize, values);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glselectbuffer
+  public static glSelectBuffer(size: GLsizei, buffer: GLuint_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glPixelStoref(pname: GLenum, param: GLfloat): void {
-    return (this._glPixelStoref ??= load('glPixelStoref', { args: [u32, f32], returns: voidType }))(pname, param);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glshademodel
+  public static glShadeModel(mode: GLenum): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glPixelStorei(pname: GLenum, param: GLint): void {
-    return (this._glPixelStorei ??= load('glPixelStorei', { args: [u32, i32], returns: voidType }))(pname, param);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glstencilfunc
+  public static glStencilFunc(func: GLenum, ref: GLint, mask: GLuint): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glPixelTransferf(pname: GLenum, param: GLfloat): void {
-    return (this._glPixelTransferf ??= load('glPixelTransferf', { args: [u32, f32], returns: voidType }))(pname, param);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glstencilmask
+  public static glStencilMask(mask: GLuint): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glPixelTransferi(pname: GLenum, param: GLint): void {
-    return (this._glPixelTransferi ??= load('glPixelTransferi', { args: [u32, i32], returns: voidType }))(pname, param);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glstencilop
+  public static glStencilOp(fail: GLenum, zfail: GLenum, zpass: GLenum): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glPixelZoom(xfactor: GLfloat, yfactor: GLfloat): void {
-    return (this._glPixelZoom ??= load('glPixelZoom', { args: [f32, f32], returns: voidType }))(xfactor, yfactor);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gltexcoord1d
+  public static glTexCoord1d(s: GLdouble): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glPointSize(size: GLfloat): void {
-    return (this._glPointSize ??= load('glPointSize', { args: [f32], returns: voidType }))(size);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gltexcoord1dv
+  public static glTexCoord1dv(v: GLdouble_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glPolygonMode(face: GLenum, mode: GLenum): void {
-    return (this._glPolygonMode ??= load('glPolygonMode', { args: [u32, u32], returns: voidType }))(face, mode);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gltexcoord1f
+  public static glTexCoord1f(s: GLfloat): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glPolygonOffset(factor: GLfloat, units: GLfloat): void {
-    return (this._glPolygonOffset ??= load('glPolygonOffset', { args: [f32, f32], returns: voidType }))(factor, units);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gltexcoord1fv
+  public static glTexCoord1fv(v: GLfloat_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glPolygonStipple(mask: GLubyte_): void {
-    return (this._glPolygonStipple ??= load('glPolygonStipple', { args: [ptr], returns: voidType }))(mask);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gltexcoord1i
+  public static glTexCoord1i(s: GLint): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glPopAttrib(): void {
-    return (this._glPopAttrib ??= load('glPopAttrib', { args: [], returns: voidType }))();
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gltexcoord1iv
+  public static glTexCoord1iv(v: GLint_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glPopMatrix(): void {
-    return (this._glPopMatrix ??= load('glPopMatrix', { args: [], returns: voidType }))();
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gltexcoord1s
+  public static glTexCoord1s(s: GLshort): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glPopName(): void {
-    return (this._glPopName ??= load('glPopName', { args: [], returns: voidType }))();
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gltexcoord1sv
+  public static glTexCoord1sv(v: GLshort_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glPrioritizeTextures(n: GLsizei, textures: GLuint_, priorities: GLclampf_): void {
-    return (this._glPrioritizeTextures ??= load('glPrioritizeTextures', { args: [i32, ptr, ptr], returns: voidType }))(n, textures, priorities);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gltexcoord2d
+  public static glTexCoord2d(s: GLdouble, t: GLdouble): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glPushAttrib(mask: GLbitfield): void {
-    return (this._glPushAttrib ??= load('glPushAttrib', { args: [u32], returns: voidType }))(mask);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gltexcoord2dv
+  public static glTexCoord2dv(v: GLdouble_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glPushMatrix(): void {
-    return (this._glPushMatrix ??= load('glPushMatrix', { args: [], returns: voidType }))();
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gltexcoord2f
+  public static glTexCoord2f(s: GLfloat, t: GLfloat): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glPushName(name: GLuint): void {
-    return (this._glPushName ??= load('glPushName', { args: [u32], returns: voidType }))(name);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gltexcoord2fv
+  public static glTexCoord2fv(v: GLfloat_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glRasterPos2f(x: GLfloat, y: GLfloat): void {
-    return (this._glRasterPos2f ??= load('glRasterPos2f', { args: [f32, f32], returns: voidType }))(x, y);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gltexcoord2i
+  public static glTexCoord2i(s: GLint, t: GLint): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glRasterPos3f(x: GLfloat, y: GLfloat, z: GLfloat): void {
-    return (this._glRasterPos3f ??= load('glRasterPos3f', { args: [f32, f32, f32], returns: voidType }))(x, y, z);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gltexcoord2iv
+  public static glTexCoord2iv(v: GLint_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glRasterPos4f(x: GLfloat, y: GLfloat, z: GLfloat, w: GLfloat): void {
-    return (this._glRasterPos4f ??= load('glRasterPos4f', { args: [f32, f32, f32, f32], returns: voidType }))(x, y, z, w);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gltexcoord2s
+  public static glTexCoord2s(s: GLshort, t: GLshort): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glReadBuffer(mode: GLenum): void {
-    return (this._glReadBuffer ??= load('glReadBuffer', { args: [u32], returns: voidType }))(mode);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gltexcoord2sv
+  public static glTexCoord2sv(v: GLshort_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glReadPixels(x: GLint, y: GLint, width: GLsizei, height: GLsizei, format: GLenum, type: GLenum, pixels: GLvoid_): void {
-    return (this._glReadPixels ??= load('glReadPixels', { args: [i32, i32, i32, i32, u32, u32, ptr], returns: voidType }))(x, y, width, height, format, type, pixels);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gltexcoord3d
+  public static glTexCoord3d(s: GLdouble, t: GLdouble, r: GLdouble): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glRenderMode(mode: GLenum): GLint {
-    return (this._glRenderMode ??= load('glRenderMode', { args: [u32], returns: i32 }))(mode);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gltexcoord3dv
+  public static glTexCoord3dv(v: GLdouble_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glRotatef(angle: GLfloat, x: GLfloat, y: GLfloat, z: GLfloat): void {
-    return (this._glRotatef ??= load('glRotatef', { args: [f32, f32, f32, f32], returns: voidType }))(angle, x, y, z);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gltexcoord3f
+  public static glTexCoord3f(s: GLfloat, t: GLfloat, r: GLfloat): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glRotated(angle: GLdouble, x: GLdouble, y: GLdouble, z: GLdouble): void {
-    return (this._glRotated ??= load('glRotated', { args: [f64, f64, f64, f64], returns: voidType }))(angle, x, y, z);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gltexcoord3fv
+  public static glTexCoord3fv(v: GLfloat_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glScalef(x: GLfloat, y: GLfloat, z: GLfloat): void {
-    return (this._glScalef ??= load('glScalef', { args: [f32, f32, f32], returns: voidType }))(x, y, z);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gltexcoord3i
+  public static glTexCoord3i(s: GLint, t: GLint, r: GLint): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glScaled(x: GLdouble, y: GLdouble, z: GLdouble): void {
-    return (this._glScaled ??= load('glScaled', { args: [f64, f64, f64], returns: voidType }))(x, y, z);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gltexcoord3iv
+  public static glTexCoord3iv(v: GLint_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glScissor(x: GLint, y: GLint, width: GLsizei, height: GLsizei): void {
-    return (this._glScissor ??= load('glScissor', { args: [i32, i32, i32, i32], returns: voidType }))(x, y, width, height);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gltexcoord3s
+  public static glTexCoord3s(s: GLshort, t: GLshort, r: GLshort): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glSelectBuffer(size: GLsizei, buffer: GLuint_): void {
-    return (this._glSelectBuffer ??= load('glSelectBuffer', { args: [i32, ptr], returns: voidType }))(size, buffer);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gltexcoord3sv
+  public static glTexCoord3sv(v: GLshort_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glShadeModel(mode: GLenum): void {
-    return (this._glShadeModel ??= load('glShadeModel', { args: [u32], returns: voidType }))(mode);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gltexcoord4d
+  public static glTexCoord4d(s: GLdouble, t: GLdouble, r: GLdouble, q: GLdouble): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glStencilFunc(func: GLenum, ref: GLint, mask: GLuint): void {
-    return (this._glStencilFunc ??= load('glStencilFunc', { args: [u32, i32, u32], returns: voidType }))(func, ref, mask);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gltexcoord4dv
+  public static glTexCoord4dv(v: GLdouble_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glStencilMask(mask: GLuint): void {
-    return (this._glStencilMask ??= load('glStencilMask', { args: [u32], returns: voidType }))(mask);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gltexcoord4f
+  public static glTexCoord4f(s: GLfloat, t: GLfloat, r: GLfloat, q: GLfloat): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glStencilOp(fail: GLenum, zfail: GLenum, zpass: GLenum): void {
-    return (this._glStencilOp ??= load('glStencilOp', { args: [u32, u32, u32], returns: voidType }))(fail, zfail, zpass);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gltexcoord4fv
+  public static glTexCoord4fv(v: GLfloat_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glTexCoord2f(s: GLfloat, t: GLfloat): void {
-    return (this._glTexCoord2f ??= load('glTexCoord2f', { args: [f32, f32], returns: voidType }))(s, t);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gltexcoord4i
+  public static glTexCoord4i(s: GLint, t: GLint, r: GLint, q: GLint): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glTexCoordPointer(size: GLint, type: GLenum, stride: GLsizei, pointer: GLvoid_): void {
-    return (this._glTexCoordPointer ??= load('glTexCoordPointer', { args: [i32, u32, i32, ptr], returns: voidType }))(size, type, stride, pointer);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gltexcoord4iv
+  public static glTexCoord4iv(v: GLint_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glTexEnvf(target: GLenum, pname: GLenum, param: GLfloat): void {
-    return (this._glTexEnvf ??= load('glTexEnvf', { args: [u32, u32, f32], returns: voidType }))(target, pname, param);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gltexcoord4s
+  public static glTexCoord4s(s: GLshort, t: GLshort, r: GLshort, q: GLshort): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glTexEnvfv(target: GLenum, pname: GLenum, params: GLfloat_): void {
-    return (this._glTexEnvfv ??= load('glTexEnvfv', { args: [u32, u32, ptr], returns: voidType }))(target, pname, params);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gltexcoord4sv
+  public static glTexCoord4sv(v: GLshort_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glTexEnvi(target: GLenum, pname: GLenum, param: GLint): void {
-    return (this._glTexEnvi ??= load('glTexEnvi', { args: [u32, u32, i32], returns: voidType }))(target, pname, param);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gltexcoordpointer
+  public static glTexCoordPointer(size: GLint, type: GLenum, stride: GLsizei, pointer: GLvoid_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glTexEnviv(target: GLenum, pname: GLenum, params: GLint_): void {
-    return (this._glTexEnviv ??= load('glTexEnviv', { args: [u32, u32, ptr], returns: voidType }))(target, pname, params);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gltexenvf
+  public static glTexEnvf(target: GLenum, pname: GLenum, param: GLfloat): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glTexGend(coord: GLenum, pname: GLenum, param: GLdouble): void {
-    return (this._glTexGend ??= load('glTexGend', { args: [u32, u32, f64], returns: voidType }))(coord, pname, param);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gltexenvfv
+  public static glTexEnvfv(target: GLenum, pname: GLenum, params: GLfloat_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glTexGendv(coord: GLenum, pname: GLenum, params: GLdouble_): void {
-    return (this._glTexGendv ??= load('glTexGendv', { args: [u32, u32, ptr], returns: voidType }))(coord, pname, params);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gltexenvi
+  public static glTexEnvi(target: GLenum, pname: GLenum, param: GLint): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glTexGenf(coord: GLenum, pname: GLenum, param: GLfloat): void {
-    return (this._glTexGenf ??= load('glTexGenf', { args: [u32, u32, f32], returns: voidType }))(coord, pname, param);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gltexenviv
+  public static glTexEnviv(target: GLenum, pname: GLenum, params: GLint_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glTexGenfv(coord: GLenum, pname: GLenum, params: GLfloat_): void {
-    return (this._glTexGenfv ??= load('glTexGenfv', { args: [u32, u32, ptr], returns: voidType }))(coord, pname, params);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gltexgend
+  public static glTexGend(coord: GLenum, pname: GLenum, param: GLdouble): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glTexGeni(coord: GLenum, pname: GLenum, param: GLint): void {
-    return (this._glTexGeni ??= load('glTexGeni', { args: [u32, u32, i32], returns: voidType }))(coord, pname, param);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gltexgendv
+  public static glTexGendv(coord: GLenum, pname: GLenum, params: GLdouble_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glTexGeniv(coord: GLenum, pname: GLenum, params: GLint_): void {
-    return (this._glTexGeniv ??= load('glTexGeniv', { args: [u32, u32, ptr], returns: voidType }))(coord, pname, params);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gltexgenf
+  public static glTexGenf(coord: GLenum, pname: GLenum, param: GLfloat): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glTexImage1D(target: GLenum, level: GLint, internalformat: GLint, width: GLsizei, border: GLint, format: GLenum, type: GLenum, pixels: GLvoid_): void {
-    return (this._glTexImage1D ??= load('glTexImage1D', { args: [u32, i32, i32, i32, i32, u32, u32, ptr], returns: voidType }))(target, level, internalformat, width, border, format, type, pixels);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gltexgenfv
+  public static glTexGenfv(coord: GLenum, pname: GLenum, params: GLfloat_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glTexImage2D(target: GLenum, level: GLint, internalformat: GLint, width: GLsizei, height: GLsizei, border: GLint, format: GLenum, type: GLenum, pixels: GLvoid_): void {
-    return (this._glTexImage2D ??= load('glTexImage2D', { args: [u32, i32, i32, i32, i32, i32, u32, u32, ptr], returns: voidType }))(target, level, internalformat, width, height, border, format, type, pixels);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gltexgeni
+  public static glTexGeni(coord: GLenum, pname: GLenum, param: GLint): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glTexParameterf(target: GLenum, pname: GLenum, param: GLfloat): void {
-    return (this._glTexParameterf ??= load('glTexParameterf', { args: [u32, u32, f32], returns: voidType }))(target, pname, param);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gltexgeniv
+  public static glTexGeniv(coord: GLenum, pname: GLenum, params: GLint_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glTexParameterfv(target: GLenum, pname: GLenum, params: GLfloat_): void {
-    return (this._glTexParameterfv ??= load('glTexParameterfv', { args: [u32, u32, ptr], returns: voidType }))(target, pname, params);
+  // prettier-ignore
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glteximage1d
+  public static glTexImage1D(target: GLenum, level: GLint, internalformat: GLint, width: GLsizei, border: GLint, format: GLenum, type: GLenum, pixels: GLvoid_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glTexParameteri(target: GLenum, pname: GLenum, param: GLint): void {
-    return (this._glTexParameteri ??= load('glTexParameteri', { args: [u32, u32, i32], returns: voidType }))(target, pname, param);
+  // prettier-ignore
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glteximage2d
+  public static glTexImage2D(target: GLenum, level: GLint, internalformat: GLint, width: GLsizei, height: GLsizei, border: GLint, format: GLenum, type: GLenum, pixels: GLvoid_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glTexParameteriv(target: GLenum, pname: GLenum, params: GLint_): void {
-    return (this._glTexParameteriv ??= load('glTexParameteriv', { args: [u32, u32, ptr], returns: voidType }))(target, pname, params);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gltexparameterf
+  public static glTexParameterf(target: GLenum, pname: GLenum, param: GLfloat): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glTexSubImage1D(target: GLenum, level: GLint, xoffset: GLint, width: GLsizei, format: GLenum, type: GLenum, pixels: GLvoid_): void {
-    return (this._glTexSubImage1D ??= load('glTexSubImage1D', { args: [u32, i32, i32, i32, u32, u32, ptr], returns: voidType }))(target, level, xoffset, width, format, type, pixels);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gltexparameterfv
+  public static glTexParameterfv(target: GLenum, pname: GLenum, params: GLfloat_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glTexSubImage2D(target: GLenum, level: GLint, xoffset: GLint, yoffset: GLint, width: GLsizei, height: GLsizei, format: GLenum, type: GLenum, pixels: GLvoid_): void {
-    return (this._glTexSubImage2D ??= load('glTexSubImage2D', { args: [u32, i32, i32, i32, i32, i32, u32, u32, ptr], returns: voidType }))(target, level, xoffset, yoffset, width, height, format, type, pixels);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gltexparameteri
+  public static glTexParameteri(target: GLenum, pname: GLenum, param: GLint): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glTranslatef(x: GLfloat, y: GLfloat, z: GLfloat): void {
-    return (this._glTranslatef ??= load('glTranslatef', { args: [f32, f32, f32], returns: voidType }))(x, y, z);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gltexparameteriv
+  public static glTexParameteriv(target: GLenum, pname: GLenum, params: GLint_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glTranslated(x: GLdouble, y: GLdouble, z: GLdouble): void {
-    return (this._glTranslated ??= load('glTranslated', { args: [f64, f64, f64], returns: voidType }))(x, y, z);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gltexsubimage1d
+  public static glTexSubImage1D(target: GLenum, level: GLint, xoffset: GLint, width: GLsizei, format: GLenum, type: GLenum, pixels: GLvoid_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glVertex2f(x: GLfloat, y: GLfloat): void {
-    return (this._glVertex2f ??= load('glVertex2f', { args: [f32, f32], returns: voidType }))(x, y);
+  // prettier-ignore
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gltexsubimage2d
+  public static glTexSubImage2D(target: GLenum, level: GLint, xoffset: GLint, yoffset: GLint, width: GLsizei, height: GLsizei, format: GLenum, type: GLenum, pixels: GLvoid_): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glVertex3f(x: GLfloat, y: GLfloat, z: GLfloat): void {
-    return (this._glVertex3f ??= load('glVertex3f', { args: [f32, f32, f32], returns: voidType }))(x, y, z);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gltranslated
+  public static glTranslated(x: GLdouble, y: GLdouble, z: GLdouble): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glVertexPointer(size: GLint, type: GLenum, stride: GLsizei, pointer: GLvoid_): void {
-    return (this._glVertexPointer ??= load('glVertexPointer', { args: [i32, u32, i32, ptr], returns: voidType }))(size, type, stride, pointer);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/gltranslatef
+  public static glTranslatef(x: GLfloat, y: GLfloat, z: GLfloat): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  public glViewport(x: GLint, y: GLint, width: GLsizei, height: GLsizei): void {
-    return (this._glViewport ??= load('glViewport', { args: [i32, i32, i32, i32], returns: voidType }))(x, y, width, height);
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glvertex2d
+  public static glVertex2d(x: GLdouble, y: GLdouble): void {
+    throw new Error('OpenGL32 has not been initialized…');
   }
 
-  private _glAccum?: OpenGL32['glAccum'];
-  private _glAlphaFunc?: OpenGL32['glAlphaFunc'];
-  private _glAreTexturesResident?: OpenGL32['glAreTexturesResident'];
-  private _glArrayElement?: OpenGL32['glArrayElement'];
-  private _glBegin?: OpenGL32['glBegin'];
-  private _glBindTexture?: OpenGL32['glBindTexture'];
-  private _glBitmap?: OpenGL32['glBitmap'];
-  private _glBlendFunc?: OpenGL32['glBlendFunc'];
-  private _glCallList?: OpenGL32['glCallList'];
-  private _glCallLists?: OpenGL32['glCallLists'];
-  private _glClear?: OpenGL32['glClear'];
-  private _glClearAccum?: OpenGL32['glClearAccum'];
-  private _glClearColor?: OpenGL32['glClearColor'];
-  private _glClearDepth?: OpenGL32['glClearDepth'];
-  private _glClearIndex?: OpenGL32['glClearIndex'];
-  private _glClearStencil?: OpenGL32['glClearStencil'];
-  private _glClipPlane?: OpenGL32['glClipPlane'];
-  private _glColorMask?: OpenGL32['glColorMask'];
-  private _glColorMaterial?: OpenGL32['glColorMaterial'];
-  private _glColorPointer?: OpenGL32['glColorPointer'];
-  private _glCopyPixels?: OpenGL32['glCopyPixels'];
-  private _glCopyTexImage1D?: OpenGL32['glCopyTexImage1D'];
-  private _glCopyTexImage2D?: OpenGL32['glCopyTexImage2D'];
-  private _glCopyTexSubImage1D?: OpenGL32['glCopyTexSubImage1D'];
-  private _glCopyTexSubImage2D?: OpenGL32['glCopyTexSubImage2D'];
-  private _glCullFace?: OpenGL32['glCullFace'];
-  private _glDeleteLists?: OpenGL32['glDeleteLists'];
-  private _glDeleteTextures?: OpenGL32['glDeleteTextures'];
-  private _glDepthFunc?: OpenGL32['glDepthFunc'];
-  private _glDepthMask?: OpenGL32['glDepthMask'];
-  private _glDepthRange?: OpenGL32['glDepthRange'];
-  private _glDisable?: OpenGL32['glDisable'];
-  private _glDisableClientState?: OpenGL32['glDisableClientState'];
-  private _glDrawArrays?: OpenGL32['glDrawArrays'];
-  private _glDrawBuffer?: OpenGL32['glDrawBuffer'];
-  private _glDrawElements?: OpenGL32['glDrawElements'];
-  private _glDrawPixels?: OpenGL32['glDrawPixels'];
-  private _glEdgeFlag?: OpenGL32['glEdgeFlag'];
-  private _glEdgeFlagPointer?: OpenGL32['glEdgeFlagPointer'];
-  private _glEdgeFlagv?: OpenGL32['glEdgeFlagv'];
-  private _glEnable?: OpenGL32['glEnable'];
-  private _glEnableClientState?: OpenGL32['glEnableClientState'];
-  private _glEnd?: OpenGL32['glEnd'];
-  private _glEndList?: OpenGL32['glEndList'];
-  private _glFeedbackBuffer?: OpenGL32['glFeedbackBuffer'];
-  private _glFinish?: OpenGL32['glFinish'];
-  private _glFlush?: OpenGL32['glFlush'];
-  private _glFogf?: OpenGL32['glFogf'];
-  private _glFogfv?: OpenGL32['glFogfv'];
-  private _glFogi?: OpenGL32['glFogi'];
-  private _glFogiv?: OpenGL32['glFogiv'];
-  private _glFrontFace?: OpenGL32['glFrontFace'];
-  private _glFrustum?: OpenGL32['glFrustum'];
-  private _glGenLists?: OpenGL32['glGenLists'];
-  private _glGenTextures?: OpenGL32['glGenTextures'];
-  private _glGetBooleanv?: OpenGL32['glGetBooleanv'];
-  private _glGetClipPlane?: OpenGL32['glGetClipPlane'];
-  private _glGetDoublev?: OpenGL32['glGetDoublev'];
-  private _glGetError?: OpenGL32['glGetError'];
-  private _glGetFloatv?: OpenGL32['glGetFloatv'];
-  private _glGetIntegerv?: OpenGL32['glGetIntegerv'];
-  private _glGetLightfv?: OpenGL32['glGetLightfv'];
-  private _glGetLightiv?: OpenGL32['glGetLightiv'];
-  private _glGetMapdv?: OpenGL32['glGetMapdv'];
-  private _glGetMapfv?: OpenGL32['glGetMapfv'];
-  private _glGetMapiv?: OpenGL32['glGetMapiv'];
-  private _glGetMaterialfv?: OpenGL32['glGetMaterialfv'];
-  private _glGetMaterialiv?: OpenGL32['glGetMaterialiv'];
-  private _glGetPixelMapfv?: OpenGL32['glGetPixelMapfv'];
-  private _glGetPixelMapuiv?: OpenGL32['glGetPixelMapuiv'];
-  private _glGetPixelMapusv?: OpenGL32['glGetPixelMapusv'];
-  private _glGetPointerv?: OpenGL32['glGetPointerv'];
-  private _glGetPolygonStipple?: OpenGL32['glGetPolygonStipple'];
-  private _glGetString?: OpenGL32['glGetString'];
-  private _glGetTexEnvfv?: OpenGL32['glGetTexEnvfv'];
-  private _glGetTexEnviv?: OpenGL32['glGetTexEnviv'];
-  private _glGetTexGendv?: OpenGL32['glGetTexGendv'];
-  private _glGetTexGenfv?: OpenGL32['glGetTexGenfv'];
-  private _glGetTexGeniv?: OpenGL32['glGetTexGeniv'];
-  private _glGetTexImage?: OpenGL32['glGetTexImage'];
-  private _glGetTexLevelParameterfv?: OpenGL32['glGetTexLevelParameterfv'];
-  private _glGetTexLevelParameteriv?: OpenGL32['glGetTexLevelParameteriv'];
-  private _glGetTexParameterfv?: OpenGL32['glGetTexParameterfv'];
-  private _glGetTexParameteriv?: OpenGL32['glGetTexParameteriv'];
-  private _glHint?: OpenGL32['glHint'];
-  private _glIndexMask?: OpenGL32['glIndexMask'];
-  private _glIndexPointer?: OpenGL32['glIndexPointer'];
-  private _glIndexd?: OpenGL32['glIndexd'];
-  private _glIndexf?: OpenGL32['glIndexf'];
-  private _glIndexi?: OpenGL32['glIndexi'];
-  private _glIndexs?: OpenGL32['glIndexs'];
-  private _glInitNames?: OpenGL32['glInitNames'];
-  private _glInterleavedArrays?: OpenGL32['glInterleavedArrays'];
-  private _glIsEnabled?: OpenGL32['glIsEnabled'];
-  private _glIsList?: OpenGL32['glIsList'];
-  private _glIsTexture?: OpenGL32['glIsTexture'];
-  private _glLightModelf?: OpenGL32['glLightModelf'];
-  private _glLightModelfv?: OpenGL32['glLightModelfv'];
-  private _glLightModeli?: OpenGL32['glLightModeli'];
-  private _glLightModeliv?: OpenGL32['glLightModeliv'];
-  private _glLightf?: OpenGL32['glLightf'];
-  private _glLightfv?: OpenGL32['glLightfv'];
-  private _glLighti?: OpenGL32['glLighti'];
-  private _glLightiv?: OpenGL32['glLightiv'];
-  private _glLineStipple?: OpenGL32['glLineStipple'];
-  private _glLineWidth?: OpenGL32['glLineWidth'];
-  private _glListBase?: OpenGL32['glListBase'];
-  private _glLoadIdentity?: OpenGL32['glLoadIdentity'];
-  private _glLoadMatrixd?: OpenGL32['glLoadMatrixd'];
-  private _glLoadMatrixf?: OpenGL32['glLoadMatrixf'];
-  private _glLoadName?: OpenGL32['glLoadName'];
-  private _glLogicOp?: OpenGL32['glLogicOp'];
-  private _glMap1d?: OpenGL32['glMap1d'];
-  private _glMap1f?: OpenGL32['glMap1f'];
-  private _glMap2d?: OpenGL32['glMap2d'];
-  private _glMap2f?: OpenGL32['glMap2f'];
-  private _glMapGrid1d?: OpenGL32['glMapGrid1d'];
-  private _glMapGrid1f?: OpenGL32['glMapGrid1f'];
-  private _glMapGrid2d?: OpenGL32['glMapGrid2d'];
-  private _glMapGrid2f?: OpenGL32['glMapGrid2f'];
-  private _glMaterialf?: OpenGL32['glMaterialf'];
-  private _glMaterialfv?: OpenGL32['glMaterialfv'];
-  private _glMateriali?: OpenGL32['glMateriali'];
-  private _glMaterialiv?: OpenGL32['glMaterialiv'];
-  private _glMatrixMode?: OpenGL32['glMatrixMode'];
-  private _glMultMatrixd?: OpenGL32['glMultMatrixd'];
-  private _glMultMatrixf?: OpenGL32['glMultMatrixf'];
-  private _glNewList?: OpenGL32['glNewList'];
-  private _glNormal3f?: OpenGL32['glNormal3f'];
-  private _glNormalPointer?: OpenGL32['glNormalPointer'];
-  private _glOrtho?: OpenGL32['glOrtho'];
-  private _glPassThrough?: OpenGL32['glPassThrough'];
-  private _glPixelMapfv?: OpenGL32['glPixelMapfv'];
-  private _glPixelMapuiv?: OpenGL32['glPixelMapuiv'];
-  private _glPixelMapusv?: OpenGL32['glPixelMapusv'];
-  private _glPixelStoref?: OpenGL32['glPixelStoref'];
-  private _glPixelStorei?: OpenGL32['glPixelStorei'];
-  private _glPixelTransferf?: OpenGL32['glPixelTransferf'];
-  private _glPixelTransferi?: OpenGL32['glPixelTransferi'];
-  private _glPixelZoom?: OpenGL32['glPixelZoom'];
-  private _glPointSize?: OpenGL32['glPointSize'];
-  private _glPolygonMode?: OpenGL32['glPolygonMode'];
-  private _glPolygonOffset?: OpenGL32['glPolygonOffset'];
-  private _glPolygonStipple?: OpenGL32['glPolygonStipple'];
-  private _glPopAttrib?: OpenGL32['glPopAttrib'];
-  private _glPopMatrix?: OpenGL32['glPopMatrix'];
-  private _glPopName?: OpenGL32['glPopName'];
-  private _glPrioritizeTextures?: OpenGL32['glPrioritizeTextures'];
-  private _glPushAttrib?: OpenGL32['glPushAttrib'];
-  private _glPushMatrix?: OpenGL32['glPushMatrix'];
-  private _glPushName?: OpenGL32['glPushName'];
-  private _glRasterPos2f?: OpenGL32['glRasterPos2f'];
-  private _glRasterPos3f?: OpenGL32['glRasterPos3f'];
-  private _glRasterPos4f?: OpenGL32['glRasterPos4f'];
-  private _glReadBuffer?: OpenGL32['glReadBuffer'];
-  private _glReadPixels?: OpenGL32['glReadPixels'];
-  private _glRenderMode?: OpenGL32['glRenderMode'];
-  private _glRotatef?: OpenGL32['glRotatef'];
-  private _glRotated?: OpenGL32['glRotated'];
-  private _glScalef?: OpenGL32['glScalef'];
-  private _glScaled?: OpenGL32['glScaled'];
-  private _glScissor?: OpenGL32['glScissor'];
-  private _glSelectBuffer?: OpenGL32['glSelectBuffer'];
-  private _glShadeModel?: OpenGL32['glShadeModel'];
-  private _glStencilFunc?: OpenGL32['glStencilFunc'];
-  private _glStencilMask?: OpenGL32['glStencilMask'];
-  private _glStencilOp?: OpenGL32['glStencilOp'];
-  private _glTexCoord2f?: OpenGL32['glTexCoord2f'];
-  private _glTexCoordPointer?: OpenGL32['glTexCoordPointer'];
-  private _glTexEnvf?: OpenGL32['glTexEnvf'];
-  private _glTexEnvfv?: OpenGL32['glTexEnvfv'];
-  private _glTexEnvi?: OpenGL32['glTexEnvi'];
-  private _glTexEnviv?: OpenGL32['glTexEnviv'];
-  private _glTexGend?: OpenGL32['glTexGend'];
-  private _glTexGendv?: OpenGL32['glTexGendv'];
-  private _glTexGenf?: OpenGL32['glTexGenf'];
-  private _glTexGenfv?: OpenGL32['glTexGenfv'];
-  private _glTexGeni?: OpenGL32['glTexGeni'];
-  private _glTexGeniv?: OpenGL32['glTexGeniv'];
-  private _glTexImage1D?: OpenGL32['glTexImage1D'];
-  private _glTexImage2D?: OpenGL32['glTexImage2D'];
-  private _glTexParameterf?: OpenGL32['glTexParameterf'];
-  private _glTexParameterfv?: OpenGL32['glTexParameterfv'];
-  private _glTexParameteri?: OpenGL32['glTexParameteri'];
-  private _glTexParameteriv?: OpenGL32['glTexParameteriv'];
-  private _glTexSubImage1D?: OpenGL32['glTexSubImage1D'];
-  private _glTexSubImage2D?: OpenGL32['glTexSubImage2D'];
-  private _glTranslatef?: OpenGL32['glTranslatef'];
-  private _glTranslated?: OpenGL32['glTranslated'];
-  private _glVertex2f?: OpenGL32['glVertex2f'];
-  private _glVertex3f?: OpenGL32['glVertex3f'];
-  private _glVertexPointer?: OpenGL32['glVertexPointer'];
-  private _glViewport?: OpenGL32['glViewport'];
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glvertex2dv
+  public static glVertex2dv(v: GLdouble_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glvertex2f
+  public static glVertex2f(x: GLfloat, y: GLfloat): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glvertex2fv
+  public static glVertex2fv(v: GLfloat_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glvertex2i
+  public static glVertex2i(x: GLint, y: GLint): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glvertex2iv
+  public static glVertex2iv(v: GLint_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glvertex2s
+  public static glVertex2s(x: GLshort, y: GLshort): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glvertex2sv
+  public static glVertex2sv(v: GLshort_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glvertex3d
+  public static glVertex3d(x: GLdouble, y: GLdouble, z: GLdouble): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glvertex3dv
+  public static glVertex3dv(v: GLdouble_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glvertex3f
+  public static glVertex3f(x: GLfloat, y: GLfloat, z: GLfloat): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glvertex3fv
+  public static glVertex3fv(v: GLfloat_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glvertex3i
+  public static glVertex3i(x: GLint, y: GLint, z: GLint): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glvertex3iv
+  public static glVertex3iv(v: GLint_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glvertex3s
+  public static glVertex3s(x: GLshort, y: GLshort, z: GLshort): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glvertex3sv
+  public static glVertex3sv(v: GLshort_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glvertex4d
+  public static glVertex4d(x: GLdouble, y: GLdouble, z: GLdouble, w: GLdouble): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glvertex4dv
+  public static glVertex4dv(v: GLdouble_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glvertex4f
+  public static glVertex4f(x: GLfloat, y: GLfloat, z: GLfloat, w: GLfloat): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glvertex4fv
+  public static glVertex4fv(v: GLfloat_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glvertex4i
+  public static glVertex4i(x: GLint, y: GLint, z: GLint, w: GLint): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glvertex4iv
+  public static glVertex4iv(v: GLint_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glvertex4s
+  public static glVertex4s(x: GLshort, y: GLshort, z: GLshort, w: GLshort): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glvertex4sv
+  public static glVertex4sv(v: GLshort_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glvertexpointer
+  public static glVertexPointer(size: GLint, type: GLenum, stride: GLsizei, pointer: GLvoid_): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/opengl/glviewport
+  public static glViewport(x: GLint, y: GLint, width: GLsizei, height: GLsizei): void {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-wglchoosepixelformat
+  public static wglChoosePixelFormat(hdc: HDC, ppfd: LPPIXELFORMATDESCRIPTOR): INT {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-wglcopycontext
+  public static wglCopyContext(hglrcSrc: HGLRC, hglrcDst: HGLRC, mask: UINT): BOOL {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-wglcreatecontext
+  public static wglCreateContext(hdc: HDC): HGLRC {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-wglcreatelayercontext
+  public static wglCreateLayerContext(hdc: HDC, iLayerPlane: INT): HGLRC {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-wgldeletecontext
+  public static wglDeleteContext(hglrc: HGLRC): BOOL {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-wgldescribelayerplane
+  public static wglDescribeLayerPlane(hdc: HDC, iPixelFormat: INT, iLayerPlane: INT, nBytes: UINT, plpd: LPLAYERPLANEDESCRIPTOR): BOOL {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-wgldescribepixelformat
+  public static wglDescribePixelFormat(hdc: HDC, iPixelFormat: INT, nBytes: UINT, ppfd: LPPIXELFORMATDESCRIPTOR): INT {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-wglgetcurrentcontext
+  public static wglGetCurrentContext(): HGLRC {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-wglgetcurrentdc
+  public static wglGetCurrentDC(): HDC {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-wglgetlayerpaletteentries
+  public static wglGetLayerPaletteEntries(hdc: HDC, iLayerPlane: INT, iStart: INT, cEntries: INT, pcr: GLvoid_): INT {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-wglgetprocaddress
+  public static wglGetProcAddress(lpszProc: LPCSTR): PROC {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-wglmakecurrent
+  public static wglMakeCurrent(hdc: HDC, hglrc: HGLRC): BOOL {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-wglrealizelayerpalette
+  public static wglRealizeLayerPalette(hdc: HDC, iLayerPlane: INT, bRealize: BOOL): BOOL {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-wglsetlayerpaletteentries
+  public static wglSetLayerPaletteEntries(hdc: HDC, iLayerPlane: INT, iStart: INT, cEntries: INT, pcr: GLvoid_): INT {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-wglsetpixelformat
+  public static wglSetPixelFormat(hdc: HDC, iPixelFormat: INT, ppfd: LPPIXELFORMATDESCRIPTOR): BOOL {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-wglsharelists
+  public static wglShareLists(hglrc1: HGLRC, hglrc2: HGLRC): BOOL {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-wglswapbuffers
+  public static wglSwapBuffers(hdc: HDC): BOOL {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-wglswaplayerbuffers
+  public static wglSwapLayerBuffers(hdc: HDC, fuPlanes: UINT): BOOL {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-wglusefontbitmapsa
+  public static wglUseFontBitmapsA(hdc: HDC, first: DWORD, count: DWORD, listBase: DWORD): BOOL {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-wglusefontbitmapsw
+  public static wglUseFontBitmapsW(hdc: HDC, first: DWORD, count: DWORD, listBase: DWORD): BOOL {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // prettier-ignore
+  // https://learn.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-wglusefontoutlinesa
+  public static wglUseFontOutlinesA(hdc: HDC, first: DWORD, count: DWORD, listBase: DWORD, deviation: GLfloat, extrusion: GLfloat, format: INT, lpgmf: LPGLYPHMETRICSFLOAT): BOOL {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // prettier-ignore
+  // https://learn.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-wglusefontoutlinesw
+  public static wglUseFontOutlinesW(hdc: HDC, first: DWORD, count: DWORD, listBase: DWORD, deviation: GLfloat, extrusion: GLfloat, format: INT, lpgmf: LPGLYPHMETRICSFLOAT): BOOL {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-wglgetdefaultprocaddress
+  public static wglGetDefaultProcAddress(lpszProc: LPCSTR): PROC {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // https://learn.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-wglswapmultiplebuffers
+  public static wglSwapMultipleBuffers(n: UINT, lpBuffers: LPWGLSWAP): DWORD {
+    throw new Error('OpenGL32 has not been initialized…');
+  }
 }
 
 export default OpenGL32;

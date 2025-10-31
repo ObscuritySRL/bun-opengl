@@ -1,7 +1,9 @@
-import OpenGL32, { GLenum } from 'bun-opengl32';
+import OpenGL32 from 'bun-opengl32';
 
-// Instantiate OpenGL…
+const start = performance.now();
 
-const openGL = new OpenGL32();
+OpenGL32.Init();
 
-export default openGL;
+const end = performance.now();
+
+console.log(`OpenGL32 loaded in ${(end - start).toFixed(2)} ms`);

@@ -3,7 +3,7 @@
   "bugs": {
     "url": "https://github.com/obscuritysrl/bun-opengl32/issues"
   },
-  "description": "",
+  "description": "Direct OpenGL 1.1 + WGL bindings for Bun on Windows via FFI.",
   "devDependencies": {
     "@types/bun": "latest"
   },
@@ -17,6 +17,7 @@
     "typescript": "^5"
   },
   "private": false,
+  "homepage": "https://github.com/obscuritysrl/bun-opengl32#readme",
   "repository": {
     "type": "git",
     "url": "git://github.com/obscuritysrl/bun-opengl32.git"
@@ -24,19 +25,26 @@
   "type": "module",
   "version": "1.0.0",
   "main": "./index.ts",
-  "keywords": [],
+  "keywords": [
+    "bun",
+    "ffi",
+    "windows",
+    "opengl",
+    "wgl",
+    "opengl32",
+    "graphics"
+  ],
   "files": [
     "index.ts",
-    "example/*.ts",
-    "runtime/*.ts",
     "structs/*.ts",
     "types/*.ts",
     "README.md"
   ],
+  "sideEffects": false,
   "engines": {
     "bun": ">=1.1.0"
   },
   "scripts": {
-    "run:test": "bun ./example/openGL.ts"
+    "example": "bun ./example/openGL32.ts"
   }
 }

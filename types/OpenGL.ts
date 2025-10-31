@@ -51,6 +51,29 @@ export enum GLenum {
   DepthBufferBit = 0x00000100,
   StencilBufferBit = 0x00000400,
 
+  /* AttribMask */
+  CurrentBit = 0x00000001,
+  PointBit = 0x00000002,
+  LineBit = 0x00000004,
+  PolygonBit = 0x00000008,
+  PolygonStippleBit = 0x00000010,
+  PixelModeBit = 0x00000020,
+  LightingBit = 0x00000040,
+  FogBit = 0x00000080,
+  /*      DepthBufferBit */
+  /*      AccumBufferBit */
+  /*      StencilBufferBit */
+  ViewportBit = 0x00000800,
+  TransformBit = 0x00001000,
+  EnableBit = 0x00002000,
+  /*      ColorBufferBit */
+  HintBit = 0x00008000,
+  EvalBit = 0x00010000,
+  ListBit = 0x00020000,
+  TextureBit = 0x00040000,
+  ScissorBit = 0x00080000,
+  AllAttribBits = 0x000fffff,
+
   /* ColorMaterialFace */
   /*      FrontAndBack */
 
@@ -84,6 +107,19 @@ export enum GLenum {
   /*      Less */
   /*      Never */
   /*      Notequal */
+
+  /* DrawBufferMode */
+  None = 0x0000,
+  FrontLeft = 0x0400,
+  FrontRight = 0x0401,
+  BackLeft = 0x0402,
+  BackRight = 0x0403,
+  Left = 0x0406,
+  Right = 0x0407,
+  Aux0 = 0x0409,
+  Aux1 = 0x040a,
+  Aux2 = 0x040b,
+  Aux3 = 0x040c,
 
   /* EnableCap */
   AlphaTest = 0x0bc0,
@@ -247,6 +283,11 @@ export enum GLenum {
   Projection = 0x1701,
   Texture = 0x1702,
 
+  /* PolygonMode */
+  Fill = 0x1b02,
+  Line = 0x1b01,
+  Point = 0x1b00,
+
   /* NormalPointerType */
   /*      Byte */
   /*      Fixed */
@@ -254,12 +295,17 @@ export enum GLenum {
   /*      Short */
 
   /* PixelFormat */
+  ColorIndex = 0x1900,
   Alpha = 0x1906,
+  Blue = 0x1905,
   DepthComponent = 0x1902,
+  Green = 0x1904,
   Luminance = 0x1909,
   LuminanceAlpha = 0x190a,
+  Red = 0x1903,
   Rgb = 0x1907,
   Rgba = 0x1908,
+  StencilIndex = 0x1901,
 
   /* PixelInternalFormat */
   Palette4R5G6B5Oes = 0x8b92,
@@ -275,7 +321,17 @@ export enum GLenum {
 
   /* PixelStoreParameter */
   PackAlignment = 0x0d05,
+  PackLsbFirst = 0x0d01,
+  PackRowLength = 0x0d02,
+  PackSkipPixels = 0x0d04,
+  PackSkipRows = 0x0d03,
+  PackSwapBytes = 0x0d00,
   UnpackAlignment = 0x0cf5,
+  UnpackLsbFirst = 0x0cf1,
+  UnpackRowLength = 0x0cf2,
+  UnpackSkipPixels = 0x0cf4,
+  UnpackSkipRows = 0x0cf3,
+  UnpackSwapBytes = 0x0cf0,
 
   /* PixelType */
   /*      UnsignedByte */
@@ -317,6 +373,20 @@ export enum GLenum {
   /*      Float */
   /*      Short */
 
+  /* TexGenCoord */
+  S = 0x2000,
+  T = 0x2001,
+  R = 0x2002,
+  Q = 0x2003,
+
+  /* TexGenParameter */
+  ObjectLinear = 0x2401,
+  EyeLinear = 0x2400,
+  SphereMap = 0x2402,
+  TextureGenMode = 0x2500,
+  ObjectPlane = 0x2501,
+  EyePlane = 0x2502,
+
   /* TextureEnvMode */
   Add = 0x0104,
   /*      Blend */
@@ -344,10 +414,13 @@ export enum GLenum {
   NearestMipmapNearest = 0x2700,
 
   /* TextureParameterName */
+  TextureBorderColor = 0x1004,
   TextureMagFilter = 0x2800,
   TextureMinFilter = 0x2801,
   TextureWrapS = 0x2802,
   TextureWrapT = 0x2803,
+  TexturePriority = 0x8066,
+  TextureResident = 0x8067,
 
   /* TextureTarget */
   /*      Texture2D */
@@ -387,6 +460,7 @@ export enum GLenum {
   Texture9 = 0x84c9,
 
   /* TextureWrapMode */
+  Clamp = 0x2900,
   ClampToEdge = 0x812f,
   Repeat = 0x2901,
 
@@ -395,9 +469,67 @@ export enum GLenum {
   /*      Fixed */
   /*      Float */
   /*      Short */
+
+  /* ClipPlaneName */
+  ClipPlane0 = 0x3000,
+  ClipPlane1 = 0x3001,
+  ClipPlane2 = 0x3002,
+  ClipPlane3 = 0x3003,
+  ClipPlane4 = 0x3004,
+  ClipPlane5 = 0x3005,
+
+  /* GetMapTarget */
+  Coeff = 0x0a00,
+  Order = 0x0a01,
+  Domain = 0x0a02,
+
+  /* GetPointervPName */
+  VertexArrayPointer = 0x808e,
+  NormalArrayPointer = 0x808f,
+  ColorArrayPointer = 0x8090,
+  TextureCoordArrayPointer = 0x8092,
+
+  /* RenderMode */
+  Render = 0x1c00,
+  Feedback = 0x1c01,
+  Select = 0x1c02,
+
+  /* TexLevelParameter */
+  TextureWidth = 0x1000,
+  TextureHeight = 0x1001,
+  TextureComponents = 0x1003,
+  TextureBorder = 0x1005,
+
+  /* PixelTransferParameter */
+  MapColor = 0x0d10,
+  MapStencil = 0x0d11,
+  IndexShift = 0x0d12,
+  IndexOffset = 0x0d13,
+  RedScale = 0x0d14,
+  RedBias = 0x0d15,
+  GreenScale = 0x0d18,
+  GreenBias = 0x0d19,
+  BlueScale = 0x0d1a,
+  BlueBias = 0x0d1b,
+  AlphaScale = 0x0d1c,
+  AlphaBias = 0x0d1d,
+  DepthScale = 0x0d1e,
+  DepthBias = 0x0d1f,
+
+  /* FeedbackType */
+  _2D = 0x0600,
+  _3D = 0x0601,
+  _3DColor = 0x0602,
+  _3DColorTexture = 0x0603,
+  _4DColorTexture = 0x0604,
+
+  /* ClientAttribMask */
+  ClientPixelStoreBit = 0x00000001,
+  ClientVertexArrayBit = 0x00000002,
+  ClientAllAttribBits = 0xffffffff,
 }
 
-export type GLbitfield = (typeof GLenum)['AccumBufferBit' | 'ColorBufferBit' | 'DepthBufferBit' | 'StencilBufferBit'];
+export type GLbitfield = number;
 export type GLboolean = (typeof GLenum)['False' | 'True'];
 export type GLbyte = number;
 export type GLclampd = number;
@@ -425,3 +557,17 @@ export type GLubyte_ = Pointer;
 export type GLuint_ = Pointer;
 export type GLushort_ = Pointer;
 export type GLvoid_ = Pointer;
+
+// Windows/WGL related types (aliases for clarity in bindings)
+export type BOOL = number; // Win32 BOOL (int)
+export type DWORD = number; // Win32 DWORD
+export type HDC = Pointer;
+export type HGLRC = Pointer;
+export type INT = number; // Win32 INT
+export type LPCSTR = Pointer;
+export type LPPIXELFORMATDESCRIPTOR = Pointer;
+export type LPLAYERPLANEDESCRIPTOR = Pointer;
+export type LPGLYPHMETRICSFLOAT = Pointer;
+export type LPWGLSWAP = Pointer;
+export type PROC = Pointer;
+export type UINT = number; // Win32 UINT
