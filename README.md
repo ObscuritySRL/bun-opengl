@@ -95,6 +95,11 @@ For modern functionality, use `wglGetProcAddress` to fetch extension entry point
 - The surface targets the OpenGL 1.1 API exported by `opengl32.dll`.
 - Windows only. [Bun](https://bun.sh) runtime required.
 
+## TODO
+
+- Struct layouts for Windows interop: `PIXELFORMATDESCRIPTOR`, `LAYERPLANEDESCRIPTOR`, `GLYPHMETRICSFLOAT`, `WGLSWAP` (typed buffers + helpers).
+- Typed wrappers for common WGL extensions (create context attributes, pixel format selection, swap control) are scaffolded via `structs/Extensions.ts`.
+
 ---
 
 For a minimal demo, see `example/openGL32.ts`.

@@ -1,4 +1,4 @@
-import { FFIType, dlopen, type FFIFunction } from 'bun:ffi';
+import { type FFIFunction, FFIType, dlopen } from 'bun:ffi';
 
 import type {
   GLbitfield,
@@ -40,17 +40,19 @@ import type {
   LPLAYERPLANEDESCRIPTOR,
   LPGLYPHMETRICSFLOAT,
   LPWGLSWAP,
-} from '../types/OpenGL';
+} from '../types/OpenGL32';
 
 class OpenGL32 {
   public static Init(): typeof OpenGL32 {
+    const { symbols } = dlopen('opengl32.dll', OpenGL32.Symbols);
+
     return Object.defineProperties(OpenGL32, {
-      ...Object.fromEntries(Object.entries(dlopen('opengl32.dll', OpenGL32.Symbols)).map(([name, symbol]) => [name, { configurable: false, value: symbol, writable: false }])),
+      ...Object.fromEntries(Object.entries(symbols).map(([name, symbol]) => [name, { configurable: false, value: symbol, writable: false }])),
       Init: { configurable: false, value: () => OpenGL32, writable: false },
     });
   }
 
-  static readonly Symbols = {
+  private static readonly Symbols = {
     glAccum: { args: [FFIType.u32, FFIType.f32], returns: FFIType.void },
     glAlphaFunc: { args: [FFIType.u32, FFIType.f32], returns: FFIType.void },
     glAreTexturesResident: { args: [FFIType.i32, FFIType.ptr, FFIType.ptr], returns: FFIType.u8 },
@@ -411,7 +413,7 @@ class OpenGL32 {
     wglUseFontBitmapsW: { args: [FFIType.ptr, FFIType.u32, FFIType.u32, FFIType.u32], returns: FFIType.i32 },
     wglUseFontOutlinesA: { args: [FFIType.ptr, FFIType.u32, FFIType.u32, FFIType.u32, FFIType.f32, FFIType.f32, FFIType.i32, FFIType.ptr], returns: FFIType.i32 },
     wglUseFontOutlinesW: { args: [FFIType.ptr, FFIType.u32, FFIType.u32, FFIType.u32, FFIType.f32, FFIType.f32, FFIType.i32, FFIType.ptr], returns: FFIType.i32 },
-  } as const as Record<string, FFIFunction>;
+  } as const satisfies Record<string, FFIFunction>;
 
   // https://learn.microsoft.com/en-us/windows/win32/opengl/glaccum
   public static glAccum(op: GLenum, value: GLfloat): void {
@@ -2219,6 +2221,32 @@ class OpenGL32 {
   // https://learn.microsoft.com/en-us/windows/win32/api/wingdi/nf-wingdi-wglswapmultiplebuffers
   public static wglSwapMultipleBuffers(n: UINT, lpBuffers: LPWGLSWAP): DWORD {
     throw new Error('OpenGL32 has not been initialized…');
+  }
+
+  // Prepare for extension implementation…
+
+  public wglChoosePixelFormatARB(): any {
+    throw new Error('OpenGL32 extensions have not been initialized…');
+  }
+
+  public wglCreateContextAttribsARB(): any {
+    throw new Error('OpenGL32 extensions have not been initialized…');
+  }
+
+  public wglGetExtensionsStringARB(): any {
+    throw new Error('OpenGL32 extensions have not been initialized…');
+  }
+
+  public wglGetExtensionsStringEXT(): any {
+    throw new Error('OpenGL32 extensions have not been initialized…');
+  }
+
+  public wglGetSwapIntervalEXT(): any {
+    throw new Error('OpenGL32 extensions have not been initialized…');
+  }
+
+  public wglSwapIntervalEXT(): any {
+    throw new Error('OpenGL32 extensions have not been initialized…');
   }
 }
 
