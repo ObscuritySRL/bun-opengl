@@ -1,4 +1,4 @@
-import { FFIType, dlopen } from 'bun:ffi';
+import { FFIType, dlopen, type FFIFunction } from 'bun:ffi';
 
 import type {
   GLbitfield,
@@ -411,7 +411,7 @@ class OpenGL32 {
     wglUseFontBitmapsW: { args: [FFIType.ptr, FFIType.u32, FFIType.u32, FFIType.u32], returns: FFIType.i32 },
     wglUseFontOutlinesA: { args: [FFIType.ptr, FFIType.u32, FFIType.u32, FFIType.u32, FFIType.f32, FFIType.f32, FFIType.i32, FFIType.ptr], returns: FFIType.i32 },
     wglUseFontOutlinesW: { args: [FFIType.ptr, FFIType.u32, FFIType.u32, FFIType.u32, FFIType.f32, FFIType.f32, FFIType.i32, FFIType.ptr], returns: FFIType.i32 },
-  } as const;
+  } as const as Record<string, FFIFunction>;
 
   // https://learn.microsoft.com/en-us/windows/win32/opengl/glaccum
   public static glAccum(op: GLenum, value: GLfloat): void {
