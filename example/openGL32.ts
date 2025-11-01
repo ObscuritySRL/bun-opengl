@@ -7,3 +7,5 @@ OpenGL32.Init();
 const end = performance.now();
 
 console.log(`OpenGL32 loaded in ${(end - start).toFixed(2)} ms`);
+
+// Ready to use any OpenGL32 entry point after Init()

@@ -1,20 +1,22 @@
 # bun-opengl32
 
-Zero-overhead OpenGL 1.1 + WGL bindings for [Bun](https://bun.sh) on Windows.
+Zero-dependency, zero-overhead OpenGL 1.1 + WGL bindings for [Bun](https://bun.sh) on Windows.
 
 ## Overview
 
 `bun-opengl32` exposes the OpenGL 1.1 and WGL entry points exported by `opengl32.dll` using [Bun](https://bun.sh)'s FFI. It provides a single class, `OpenGL32`, which lazily binds native symbols once via `Init()` and then calls directly into the DLL.
 
-The bindings are strongly typed for a smooth DX in TypeScript. Symbol definitions were generated with AI assistance and reviewed for correctness against Win32/OpenGL 1.1 signatures.
+The bindings are strongly typed for a smooth DX in TypeScript.
+
+𝐢 · Symbol definitions were generated with AI assistance and reviewed for correctness against OpenGL 1.1/Win32 signatures.
 
 ## Features
 
-- [Bun](https://bun.sh)-first ergonomics on Windows 10/11
-- Direct FFI to `opengl32.dll` (OpenGL 1.1 + WGL)
-- Lazy, one-time initialization (`OpenGL32.Init()`)
-- No wrapper overhead; calls map 1:1 to native APIs
-- Strongly-typed enums and aliases (see `types/OpenGL.ts`)
+- [Bun](https://bun.sh)-first ergonomics on Windows 10/11.
+- Direct FFI to `opengl32.dll` (OpenGL 1.1 + WGL).
+- Lazy, one-time initialization (`OpenGL32.Init()`).
+- No wrapper overhead; calls map 1:1 to native APIs.
+- Strongly-typed enums and aliases (see `types/OpenGL.ts`).
 
 ## Requirements
 
@@ -44,17 +46,15 @@ OpenGL32.glMatrixMode(GLenum.Modelview);
 // Convert the returned C string pointer to a JS string with your FFI helper.
 ```
 
-For a tiny usage example, see `example/openGL32.ts`.
-
 ## API Highlights
 
+- In-source docs - Every `gl*`/`wgl*` method includes a Microsoft Docs link above its declaration in `structs/OpenGL32.ts`.
 - `Init()` - Loads and binds all `gl*` and `wgl*` symbols.
+- `Symbols` - The internal FFI map used by `dlopen`; useful for introspection.
 - `gl*` - Full OpenGL 1.1 surface (exact names and signatures).
 - `wgl*` - Core WGL entry points for context and pixel format management.
-- `Symbols` - The internal FFI map used by `dlopen`; useful for introspection.
-- In-source docs - Every `gl*`/`wgl*` method includes a Microsoft Docs link above its declaration in `structs/OpenGL32.ts`.
 
-Tip: Use `glGetError()` to check failures after critical calls:
+**Tip**: Use `glGetError()` to check failures after critical calls:
 
 ```ts
 // After a sequence of gl* calls
@@ -85,21 +85,18 @@ OpenGL32.wglMakeCurrent(hdc, hglrc);
 // OpenGL32.glClear(GLenum.ColorBufferBit);
 ```
 
-For modern functionality, use `wglGetProcAddress` to fetch extension entry points.
+For modern functionality, use `wglGetProcAddress` to fetch extension entry points. A helper for this is coming soon.
 
 ## Notes
 
 - Always call `OpenGL32.Init()` before any `gl*`/`wgl*` call.
+- [Bun](https://bun.sh) runtime required.
 - Extensions and newer functionality must be loaded via `wglGetProcAddress`.
 - Most `gl*` entry points require a current context; without one they may no-op or fail.
 - The surface targets the OpenGL 1.1 API exported by `opengl32.dll`.
-- Windows only. [Bun](https://bun.sh) runtime required.
+- Windows only.
 
 ## TODO
 
 - Struct layouts for Windows interop: `PIXELFORMATDESCRIPTOR`, `LAYERPLANEDESCRIPTOR`, `GLYPHMETRICSFLOAT`, `WGLSWAP` (typed buffers + helpers).
 - Typed wrappers for common WGL extensions (create context attributes, pixel format selection, swap control) are scaffolded via `structs/Extensions.ts`.
-
----
-
-For a minimal demo, see `example/openGL32.ts`.
