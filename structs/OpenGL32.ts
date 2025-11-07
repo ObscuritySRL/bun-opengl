@@ -56,7 +56,7 @@ import type {
  * import OpenGL32 from './structs/OpenGL32';
  *
  * // Lazy: bind on first call
- * OpenGL32.glGetString(GLenum.Vendor);
+ * OpenGL32.glGetString(GLenum.GL_VENDOR);
  *
  * // Or preload a subset to avoid per-symbol lazy binding cost
  * OpenGL32.Preload(['glGetString', 'glClear', 'wglGetProcAddress']);

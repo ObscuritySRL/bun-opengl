@@ -36,13 +36,13 @@ bun add bun-opengl32
 import OpenGL32, { GLenum } from 'bun-opengl32';
 
 // Option A: call methods directly (lazy bind on first use)
-OpenGL32.glMatrixMode(GLenum.Modelview);
+OpenGL32.glMatrixMode(GLenum.GL_MODELVIEW);
 
 // Option B: bind a subset (or everything) up-front
 OpenGL32.Preload(['glMatrixMode', 'glClear', 'wglGetProcAddress']);
 
 // If you already have a current context, you can query strings:
-// const vendorPtr = OpenGL32.glGetString(GLenum.Vendor);
+// const vendorPtr = OpenGL32.glGetString(GLenum.GL_VENDOR);
 // Convert the returned C string pointer to a JS string with your FFI helper.
 ```
 
@@ -59,8 +59,8 @@ OpenGL32.Preload(['glMatrixMode', 'glClear', 'wglGetProcAddress']);
 ```ts
 // After a sequence of gl* calls
 const err = OpenGL32.glGetError();
-if (err !== GLenum.NoError) {
-  // Handle error; see GLenum.InvalidEnum/InvalidValue/etc.
+if (err !== GLenum.GL_NO_ERROR) {
+  // Handle error; see GLenum.GL_INVALID_ENUM/GLenum.GL_INVALID_VALUE/etc.
 }
 ```
 
@@ -74,7 +74,10 @@ This package focuses on symbol access. You still need to obtain an `HDC` from yo
 // Acquire HDC from your window code
 const hdc /* : HDC */ = /* ... */ null as any;
 
-OpenGL32.Preload();
+OpenGL32.Preload(['wglCreateContext', 'wglMakeCurrent']);
+
+// Or preload everything once
+// OpenGL32.Preload();
 
 // Create and make a context current
 const hglrc = OpenGL32.wglCreateContext(hdc);
@@ -82,7 +85,7 @@ OpenGL32.wglMakeCurrent(hdc, hglrc);
 
 // Now gl* calls that require a current context are valid
 // OpenGL32.glClearColor(0.1, 0.1, 0.1, 1.0);
-// OpenGL32.glClear(GLenum.ColorBufferBit);
+// OpenGL32.glClear(GLenum.GL_COLOR_BUFFER_BIT);
 ```
 
 For modern functionality, use `wglGetProcAddress` to fetch extension entry points. A helper for this is coming soon.
