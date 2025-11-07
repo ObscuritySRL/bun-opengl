@@ -1,4 +1,8 @@
-ignore
+AGENTS.md
+AGENTS.*.md
+ignore*
+
+bin
 
 # dependencies (bun install)
 node_modules
