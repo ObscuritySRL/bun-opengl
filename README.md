@@ -4,7 +4,7 @@ Zero-dependency, zero-overhead OpenGL 1.1 + WGL bindings for [Bun](https://bun.s
 
 ## Overview
 
-`bun-opengl32` exposes the OpenGL 1.1 and WGL entry points exported by `opengl32.dll` using [Bun](https://bun.sh)'s FFI. It provides a single class, `OpenGL32`, which lazily binds native symbols once via `Init()` and then calls directly into the DLL.
+`bun-opengl32` exposes the OpenGL 1.1 and WGL entry points exported by `opengl32.dll` using [Bun](https://bun.sh)'s FFI. It provides a single class, `OpenGL32`, whose methods lazily bind native symbols on first use; for bulk, up‑front binding, call `Preload()`.
 
 The bindings are strongly typed for a smooth DX in TypeScript.
 
@@ -14,7 +14,7 @@ The bindings are strongly typed for a smooth DX in TypeScript.
 
 - [Bun](https://bun.sh)-first ergonomics on Windows 10/11.
 - Direct FFI to `opengl32.dll` (OpenGL 1.1 + WGL).
-- Lazy, one-time initialization (`OpenGL32.Init()`).
+- Lazy per-call binding, plus optional bulk preload (`OpenGL32.Preload()`).
 - No wrapper overhead; calls map 1:1 to native APIs.
 - Strongly-typed enums and aliases (see `types/OpenGL.ts`).
 
@@ -35,11 +35,11 @@ bun add bun-opengl32
 ```ts
 import OpenGL32, { GLenum } from 'bun-opengl32';
 
-// Bind all symbols from opengl32.dll once
-OpenGL32.Init();
-
-// Use any OpenGL 1.1 entry point
+// Option A: call methods directly (lazy bind on first use)
 OpenGL32.glMatrixMode(GLenum.Modelview);
+
+// Option B: bind a subset (or everything) up-front
+OpenGL32.Preload(['glMatrixMode', 'glClear', 'wglGetProcAddress']);
 
 // If you already have a current context, you can query strings:
 // const vendorPtr = OpenGL32.glGetString(GLenum.Vendor);
@@ -49,7 +49,7 @@ OpenGL32.glMatrixMode(GLenum.Modelview);
 ## API Highlights
 
 - In-source docs - Every `gl*`/`wgl*` method includes a Microsoft Docs link above its declaration in `structs/OpenGL32.ts`.
-- `Init()` - Loads and binds all `gl*` and `wgl*` symbols.
+- `Preload()` - Eagerly binds a subset (or all) `gl*` and `wgl*` symbols.
 - `Symbols` - The internal FFI map used by `dlopen`; useful for introspection.
 - `gl*` - Full OpenGL 1.1 surface (exact names and signatures).
 - `wgl*` - Core WGL entry points for context and pixel format management.
@@ -74,7 +74,7 @@ This package focuses on symbol access. You still need to obtain an `HDC` from yo
 // Acquire HDC from your window code
 const hdc /* : HDC */ = /* ... */ null as any;
 
-OpenGL32.Init();
+OpenGL32.Preload();
 
 // Create and make a context current
 const hglrc = OpenGL32.wglCreateContext(hdc);
@@ -89,7 +89,7 @@ For modern functionality, use `wglGetProcAddress` to fetch extension entry point
 
 ## Notes
 
-- Always call `OpenGL32.Init()` before any `gl*`/`wgl*` call.
+- Methods lazy-load on first call; use `OpenGL32.Preload()` to bind up-front if preferred.
 - [Bun](https://bun.sh) runtime required.
 - Extensions and newer functionality must be loaded via `wglGetProcAddress`.
 - Most `gl*` entry points require a current context; without one they may no-op or fail.

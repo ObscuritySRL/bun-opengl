@@ -2,10 +2,11 @@ import OpenGL32 from 'bun-opengl32';
 
 const start = performance.now();
 
-OpenGL32.Init();
+// Eagerly bind all exports (optional; methods also lazy-load on first call)
+OpenGL32.Preload();
 
 const end = performance.now();
 
-console.log(`OpenGL32 loaded in ${(end - start).toFixed(2)} ms`);
+console.log(`OpenGL32 preloaded in ${(end - start).toFixed(2)} ms`);
 
-// Ready to use any OpenGL32 entry point after Init()
+// Ready to use any OpenGL32 entry point

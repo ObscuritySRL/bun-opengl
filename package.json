@@ -1,30 +1,36 @@
 {
-  "author": "Stev Peifer <stev@bell.net>",
-  "bugs": {
-    "url": "https://github.com/obscuritysrl/bun-opengl32/issues"
-  },
-  "description": "Direct OpenGL 1.1 + WGL bindings for Bun on Windows via FFI.",
-  "devDependencies": {
-    "@types/bun": "latest"
-  },
-  "exports": {
-    ".": "./index.ts"
-  },
-  "license": "MIT",
-  "module": "index.ts",
   "name": "bun-opengl32",
-  "peerDependencies": {
-    "typescript": "^5"
-  },
-  "private": false,
-  "homepage": "https://github.com/obscuritysrl/bun-opengl32#readme",
+  "version": "1.1.0",
+  "author": "Stev Peifer <stev@bell.net>",
   "repository": {
     "type": "git",
     "url": "git://github.com/obscuritysrl/bun-opengl32.git"
   },
-  "type": "module",
-  "version": "1.0.3",
   "main": "./index.ts",
+  "module": "index.ts",
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "exports": {
+    ".": "./index.ts"
+  },
+  "bugs": {
+    "url": "https://github.com/obscuritysrl/bun-opengl32/issues"
+  },
+  "description": "Direct OpenGL 1.1 + WGL bindings for Bun on Windows via FFI.",
+  "engines": {
+    "bun": ">=1.1.0"
+  },
+  "files": [
+    "index.ts",
+    "structs/*.ts",
+    "types/*.ts",
+    "README.md"
+  ],
+  "homepage": "https://github.com/obscuritysrl/bun-opengl32#readme",
   "keywords": [
     "bun",
     "ffi",
@@ -34,17 +40,11 @@
     "opengl32",
     "graphics"
   ],
-  "files": [
-    "index.ts",
-    "structs/*.ts",
-    "types/*.ts",
-    "README.md"
-  ],
-  "sideEffects": false,
-  "engines": {
-    "bun": ">=1.1.0"
-  },
+  "license": "MIT",
+  "private": false,
   "scripts": {
     "example": "bun ./example/openGL32.ts"
-  }
+  },
+  "sideEffects": false,
+  "type": "module"
 }
