@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc:*)",
+      "Bash(bun run:*)",
+      "Bash(timeout 5 bun run:*)",
+      "Bash(timeout 3 bun run:*)",
+      "Bash(timeout 4 bun run:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(bun publish)",
+      "Bash(taskkill:*)",
+      "Bash(echo:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
