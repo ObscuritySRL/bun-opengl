@@ -1,6 +1,6 @@
 {
   "name": "bun-opengl32",
-  "version": "1.1.4",
+  "version": "1.1.5",
   "author": "Stev Peifer <stev@bell.net>",
   "repository": {
     "type": "git",
@@ -44,7 +44,8 @@
   "license": "MIT",
   "private": false,
   "scripts": {
-    "example": "bun ./example/openGL32.ts"
+    "example": "bun ./example/openGL32.ts",
+    "example:circle": "bun ./example/bouncingCircle.ts"
   },
   "sideEffects": false,
   "type": "module"
