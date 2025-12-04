@@ -1,4 +1,4 @@
-import { type FFIFunction, FFIType, dlopen } from 'bun:ffi';
+import { type FFIFunction, FFIType, dlopen, CFunction, ptr } from 'bun:ffi';
 
 import type {
   BOOL,
@@ -116,6 +116,211 @@ class OpenGL32 {
 
     return;
   }
+
+  /**
+   * Eagerly loads multiple OpenGL extensions at once.
+   *
+   * Requires an active OpenGL context. Pass a subset of extension names to load
+   * only what you need; when omitted, all extensions in `ExtensionSymbols` are loaded.
+   * Returns an object indicating which extensions were successfully loaded.
+   *
+   * @param methods Optional list of extension names to load.
+   * @returns Object mapping extension names to load success (true/false).
+   * @example
+   * ```ts
+   * // After creating an OpenGL context:
+   * const loaded = OpenGL32.LoadExtensions(['wglSwapIntervalEXT', 'wglGetSwapIntervalEXT']);
+   * if (loaded.wglSwapIntervalEXT) {
+   *   OpenGL32.wglSwapIntervalEXT(1); // Enable VSync
+   * }
+   * ```
+   */
+  public static LoadExtensions(methods?: (keyof typeof OpenGL32.ExtensionSymbols)[]): Record<string, boolean> {
+    methods ??= Object.keys(OpenGL32.ExtensionSymbols) as (keyof typeof OpenGL32.ExtensionSymbols)[];
+
+    const result: Record<string, boolean> = {};
+
+    for (const method of methods) {
+      const skip = Object.getOwnPropertyDescriptor(OpenGL32, method)?.configurable === false;
+
+      if (skip) {
+        result[method] = true;
+        continue;
+      }
+
+      const procName = Buffer.from(method + '\0', 'utf8');
+      const procAddress = OpenGL32.wglGetProcAddress(ptr(procName));
+
+      if (!procAddress || procAddress === 0) {
+        result[method] = false;
+        continue;
+      }
+
+      const spec = OpenGL32.ExtensionSymbols[method];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const fn = new (CFunction as any)({
+        ptr: procAddress,
+        args: spec.args,
+        returns: spec.returns,
+      });
+
+      Object.defineProperty(OpenGL32, method, { configurable: false, value: fn });
+      result[method] = true;
+    }
+
+    return result;
+  }
+
+  /**
+   * Extension function signatures loaded via `wglGetProcAddress`.
+   *
+   * These are OpenGL/WGL extensions not exported by opengl32.dll directly.
+   * Use `LoadExtensions` after creating an OpenGL context to bind them.
+   */
+  private static readonly ExtensionSymbols = {
+    // WGL_ARB_extensions_string
+    wglGetExtensionsStringARB: { args: [FFIType.ptr], returns: FFIType.ptr },
+
+    // WGL_ARB_pixel_format
+    wglChoosePixelFormatARB: { args: [FFIType.ptr, FFIType.ptr, FFIType.ptr, FFIType.u32, FFIType.ptr, FFIType.ptr], returns: FFIType.i32 },
+    wglGetPixelFormatAttribfvARB: { args: [FFIType.ptr, FFIType.i32, FFIType.i32, FFIType.u32, FFIType.ptr, FFIType.ptr], returns: FFIType.i32 },
+    wglGetPixelFormatAttribivARB: { args: [FFIType.ptr, FFIType.i32, FFIType.i32, FFIType.u32, FFIType.ptr, FFIType.ptr], returns: FFIType.i32 },
+
+    // WGL_ARB_create_context
+    wglCreateContextAttribsARB: { args: [FFIType.ptr, FFIType.ptr, FFIType.ptr], returns: FFIType.ptr },
+
+    // WGL_EXT_extensions_string
+    wglGetExtensionsStringEXT: { args: [], returns: FFIType.ptr },
+
+    // WGL_EXT_swap_control
+    wglGetSwapIntervalEXT: { args: [], returns: FFIType.i32 },
+    wglSwapIntervalEXT: { args: [FFIType.i32], returns: FFIType.i32 },
+
+    // GL_ARB_vertex_buffer_object / OpenGL 1.5+
+    glBindBuffer: { args: [FFIType.u32, FFIType.u32], returns: FFIType.void },
+    glBufferData: { args: [FFIType.u32, FFIType.i64, FFIType.ptr, FFIType.u32], returns: FFIType.void },
+    glBufferSubData: { args: [FFIType.u32, FFIType.i64, FFIType.i64, FFIType.ptr], returns: FFIType.void },
+    glDeleteBuffers: { args: [FFIType.i32, FFIType.ptr], returns: FFIType.void },
+    glGenBuffers: { args: [FFIType.i32, FFIType.ptr], returns: FFIType.void },
+    glGetBufferParameteriv: { args: [FFIType.u32, FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glGetBufferPointerv: { args: [FFIType.u32, FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glGetBufferSubData: { args: [FFIType.u32, FFIType.i64, FFIType.i64, FFIType.ptr], returns: FFIType.void },
+    glIsBuffer: { args: [FFIType.u32], returns: FFIType.u8 },
+    glMapBuffer: { args: [FFIType.u32, FFIType.u32], returns: FFIType.ptr },
+    glUnmapBuffer: { args: [FFIType.u32], returns: FFIType.u8 },
+
+    // GL_ARB_shader_objects / OpenGL 2.0+
+    glAttachShader: { args: [FFIType.u32, FFIType.u32], returns: FFIType.void },
+    glCompileShader: { args: [FFIType.u32], returns: FFIType.void },
+    glCreateProgram: { args: [], returns: FFIType.u32 },
+    glCreateShader: { args: [FFIType.u32], returns: FFIType.u32 },
+    glDeleteProgram: { args: [FFIType.u32], returns: FFIType.void },
+    glDeleteShader: { args: [FFIType.u32], returns: FFIType.void },
+    glDetachShader: { args: [FFIType.u32, FFIType.u32], returns: FFIType.void },
+    glGetProgramInfoLog: { args: [FFIType.u32, FFIType.i32, FFIType.ptr, FFIType.ptr], returns: FFIType.void },
+    glGetProgramiv: { args: [FFIType.u32, FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glGetShaderInfoLog: { args: [FFIType.u32, FFIType.i32, FFIType.ptr, FFIType.ptr], returns: FFIType.void },
+    glGetShaderiv: { args: [FFIType.u32, FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glGetShaderSource: { args: [FFIType.u32, FFIType.i32, FFIType.ptr, FFIType.ptr], returns: FFIType.void },
+    glGetUniformLocation: { args: [FFIType.u32, FFIType.ptr], returns: FFIType.i32 },
+    glIsProgram: { args: [FFIType.u32], returns: FFIType.u8 },
+    glIsShader: { args: [FFIType.u32], returns: FFIType.u8 },
+    glLinkProgram: { args: [FFIType.u32], returns: FFIType.void },
+    glShaderSource: { args: [FFIType.u32, FFIType.i32, FFIType.ptr, FFIType.ptr], returns: FFIType.void },
+    glUniform1f: { args: [FFIType.i32, FFIType.f32], returns: FFIType.void },
+    glUniform1fv: { args: [FFIType.i32, FFIType.i32, FFIType.ptr], returns: FFIType.void },
+    glUniform1i: { args: [FFIType.i32, FFIType.i32], returns: FFIType.void },
+    glUniform1iv: { args: [FFIType.i32, FFIType.i32, FFIType.ptr], returns: FFIType.void },
+    glUniform2f: { args: [FFIType.i32, FFIType.f32, FFIType.f32], returns: FFIType.void },
+    glUniform2fv: { args: [FFIType.i32, FFIType.i32, FFIType.ptr], returns: FFIType.void },
+    glUniform2i: { args: [FFIType.i32, FFIType.i32, FFIType.i32], returns: FFIType.void },
+    glUniform2iv: { args: [FFIType.i32, FFIType.i32, FFIType.ptr], returns: FFIType.void },
+    glUniform3f: { args: [FFIType.i32, FFIType.f32, FFIType.f32, FFIType.f32], returns: FFIType.void },
+    glUniform3fv: { args: [FFIType.i32, FFIType.i32, FFIType.ptr], returns: FFIType.void },
+    glUniform3i: { args: [FFIType.i32, FFIType.i32, FFIType.i32, FFIType.i32], returns: FFIType.void },
+    glUniform3iv: { args: [FFIType.i32, FFIType.i32, FFIType.ptr], returns: FFIType.void },
+    glUniform4f: { args: [FFIType.i32, FFIType.f32, FFIType.f32, FFIType.f32, FFIType.f32], returns: FFIType.void },
+    glUniform4fv: { args: [FFIType.i32, FFIType.i32, FFIType.ptr], returns: FFIType.void },
+    glUniform4i: { args: [FFIType.i32, FFIType.i32, FFIType.i32, FFIType.i32, FFIType.i32], returns: FFIType.void },
+    glUniform4iv: { args: [FFIType.i32, FFIType.i32, FFIType.ptr], returns: FFIType.void },
+    glUniformMatrix2fv: { args: [FFIType.i32, FFIType.i32, FFIType.u8, FFIType.ptr], returns: FFIType.void },
+    glUniformMatrix3fv: { args: [FFIType.i32, FFIType.i32, FFIType.u8, FFIType.ptr], returns: FFIType.void },
+    glUniformMatrix4fv: { args: [FFIType.i32, FFIType.i32, FFIType.u8, FFIType.ptr], returns: FFIType.void },
+    glUseProgram: { args: [FFIType.u32], returns: FFIType.void },
+    glValidateProgram: { args: [FFIType.u32], returns: FFIType.void },
+
+    // GL_ARB_vertex_shader / OpenGL 2.0+
+    glBindAttribLocation: { args: [FFIType.u32, FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glDisableVertexAttribArray: { args: [FFIType.u32], returns: FFIType.void },
+    glEnableVertexAttribArray: { args: [FFIType.u32], returns: FFIType.void },
+    glGetActiveAttrib: { args: [FFIType.u32, FFIType.u32, FFIType.i32, FFIType.ptr, FFIType.ptr, FFIType.ptr, FFIType.ptr], returns: FFIType.void },
+    glGetActiveUniform: { args: [FFIType.u32, FFIType.u32, FFIType.i32, FFIType.ptr, FFIType.ptr, FFIType.ptr, FFIType.ptr], returns: FFIType.void },
+    glGetAttribLocation: { args: [FFIType.u32, FFIType.ptr], returns: FFIType.i32 },
+    glGetVertexAttribdv: { args: [FFIType.u32, FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glGetVertexAttribfv: { args: [FFIType.u32, FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glGetVertexAttribiv: { args: [FFIType.u32, FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glGetVertexAttribPointerv: { args: [FFIType.u32, FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glVertexAttrib1d: { args: [FFIType.u32, FFIType.f64], returns: FFIType.void },
+    glVertexAttrib1dv: { args: [FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glVertexAttrib1f: { args: [FFIType.u32, FFIType.f32], returns: FFIType.void },
+    glVertexAttrib1fv: { args: [FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glVertexAttrib1s: { args: [FFIType.u32, FFIType.i16], returns: FFIType.void },
+    glVertexAttrib1sv: { args: [FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glVertexAttrib2d: { args: [FFIType.u32, FFIType.f64, FFIType.f64], returns: FFIType.void },
+    glVertexAttrib2dv: { args: [FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glVertexAttrib2f: { args: [FFIType.u32, FFIType.f32, FFIType.f32], returns: FFIType.void },
+    glVertexAttrib2fv: { args: [FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glVertexAttrib2s: { args: [FFIType.u32, FFIType.i16, FFIType.i16], returns: FFIType.void },
+    glVertexAttrib2sv: { args: [FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glVertexAttrib3d: { args: [FFIType.u32, FFIType.f64, FFIType.f64, FFIType.f64], returns: FFIType.void },
+    glVertexAttrib3dv: { args: [FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glVertexAttrib3f: { args: [FFIType.u32, FFIType.f32, FFIType.f32, FFIType.f32], returns: FFIType.void },
+    glVertexAttrib3fv: { args: [FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glVertexAttrib3s: { args: [FFIType.u32, FFIType.i16, FFIType.i16, FFIType.i16], returns: FFIType.void },
+    glVertexAttrib3sv: { args: [FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glVertexAttrib4bv: { args: [FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glVertexAttrib4d: { args: [FFIType.u32, FFIType.f64, FFIType.f64, FFIType.f64, FFIType.f64], returns: FFIType.void },
+    glVertexAttrib4dv: { args: [FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glVertexAttrib4f: { args: [FFIType.u32, FFIType.f32, FFIType.f32, FFIType.f32, FFIType.f32], returns: FFIType.void },
+    glVertexAttrib4fv: { args: [FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glVertexAttrib4iv: { args: [FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glVertexAttrib4Nbv: { args: [FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glVertexAttrib4Niv: { args: [FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glVertexAttrib4Nsv: { args: [FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glVertexAttrib4Nub: { args: [FFIType.u32, FFIType.u8, FFIType.u8, FFIType.u8, FFIType.u8], returns: FFIType.void },
+    glVertexAttrib4Nubv: { args: [FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glVertexAttrib4Nuiv: { args: [FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glVertexAttrib4Nusv: { args: [FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glVertexAttrib4s: { args: [FFIType.u32, FFIType.i16, FFIType.i16, FFIType.i16, FFIType.i16], returns: FFIType.void },
+    glVertexAttrib4sv: { args: [FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glVertexAttrib4ubv: { args: [FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glVertexAttrib4uiv: { args: [FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glVertexAttrib4usv: { args: [FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glVertexAttribPointer: { args: [FFIType.u32, FFIType.i32, FFIType.u32, FFIType.u8, FFIType.i32, FFIType.ptr], returns: FFIType.void },
+
+    // GL_ARB_vertex_array_object / OpenGL 3.0+
+    glBindVertexArray: { args: [FFIType.u32], returns: FFIType.void },
+    glDeleteVertexArrays: { args: [FFIType.i32, FFIType.ptr], returns: FFIType.void },
+    glGenVertexArrays: { args: [FFIType.i32, FFIType.ptr], returns: FFIType.void },
+    glIsVertexArray: { args: [FFIType.u32], returns: FFIType.u8 },
+
+    // GL_ARB_framebuffer_object / OpenGL 3.0+
+    glBindFramebuffer: { args: [FFIType.u32, FFIType.u32], returns: FFIType.void },
+    glBindRenderbuffer: { args: [FFIType.u32, FFIType.u32], returns: FFIType.void },
+    glCheckFramebufferStatus: { args: [FFIType.u32], returns: FFIType.u32 },
+    glDeleteFramebuffers: { args: [FFIType.i32, FFIType.ptr], returns: FFIType.void },
+    glDeleteRenderbuffers: { args: [FFIType.i32, FFIType.ptr], returns: FFIType.void },
+    glFramebufferRenderbuffer: { args: [FFIType.u32, FFIType.u32, FFIType.u32, FFIType.u32], returns: FFIType.void },
+    glFramebufferTexture2D: { args: [FFIType.u32, FFIType.u32, FFIType.u32, FFIType.u32, FFIType.i32], returns: FFIType.void },
+    glGenFramebuffers: { args: [FFIType.i32, FFIType.ptr], returns: FFIType.void },
+    glGenRenderbuffers: { args: [FFIType.i32, FFIType.ptr], returns: FFIType.void },
+    glGenerateMipmap: { args: [FFIType.u32], returns: FFIType.void },
+    glGetFramebufferAttachmentParameteriv: { args: [FFIType.u32, FFIType.u32, FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glGetRenderbufferParameteriv: { args: [FFIType.u32, FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glIsFramebuffer: { args: [FFIType.u32], returns: FFIType.u8 },
+    glIsRenderbuffer: { args: [FFIType.u32], returns: FFIType.u8 },
+    glRenderbufferStorage: { args: [FFIType.u32, FFIType.u32, FFIType.i32, FFIType.i32], returns: FFIType.void },
+  } as const;
 
   private static readonly Symbols = {
     glAccum: { args: [FFIType.u32, FFIType.f32], returns: FFIType.void },
@@ -2287,31 +2492,132 @@ class OpenGL32 {
     return OpenGL32.Load('wglSwapMultipleBuffers')(n, lpBuffers);
   }
 
-  // TODO: Prepare for extension implementation…
+  // Extension stubs - these are replaced by LoadExtensions() at runtime
+  public static wglChoosePixelFormatARB: (...args: any[]) => any;
+  public static wglCreateContextAttribsARB: (...args: any[]) => any;
+  public static wglGetExtensionsStringARB: (...args: any[]) => any;
+  public static wglGetExtensionsStringEXT: (...args: any[]) => any;
+  public static wglGetPixelFormatAttribfvARB: (...args: any[]) => any;
+  public static wglGetPixelFormatAttribivARB: (...args: any[]) => any;
+  public static wglGetSwapIntervalEXT: (...args: any[]) => any;
+  public static wglSwapIntervalEXT: (...args: any[]) => any;
 
-  public wglChoosePixelFormatARB(): any {
-    throw new Error('OpenGL32 extensions have not been initialized…');
-  }
-
-  public wglCreateContextAttribsARB(): any {
-    throw new Error('OpenGL32 extensions have not been initialized…');
-  }
-
-  public wglGetExtensionsStringARB(): any {
-    throw new Error('OpenGL32 extensions have not been initialized…');
-  }
-
-  public wglGetExtensionsStringEXT(): any {
-    throw new Error('OpenGL32 extensions have not been initialized…');
-  }
-
-  public wglGetSwapIntervalEXT(): any {
-    throw new Error('OpenGL32 extensions have not been initialized…');
-  }
-
-  public wglSwapIntervalEXT(): any {
-    throw new Error('OpenGL32 extensions have not been initialized…');
-  }
+  // GL extension stubs
+  public static glAttachShader: (...args: any[]) => any;
+  public static glBindAttribLocation: (...args: any[]) => any;
+  public static glBindBuffer: (...args: any[]) => any;
+  public static glBindFramebuffer: (...args: any[]) => any;
+  public static glBindRenderbuffer: (...args: any[]) => any;
+  public static glBindVertexArray: (...args: any[]) => any;
+  public static glBufferData: (...args: any[]) => any;
+  public static glBufferSubData: (...args: any[]) => any;
+  public static glCheckFramebufferStatus: (...args: any[]) => any;
+  public static glCompileShader: (...args: any[]) => any;
+  public static glCreateProgram: (...args: any[]) => any;
+  public static glCreateShader: (...args: any[]) => any;
+  public static glDeleteBuffers: (...args: any[]) => any;
+  public static glDeleteFramebuffers: (...args: any[]) => any;
+  public static glDeleteProgram: (...args: any[]) => any;
+  public static glDeleteRenderbuffers: (...args: any[]) => any;
+  public static glDeleteShader: (...args: any[]) => any;
+  public static glDeleteVertexArrays: (...args: any[]) => any;
+  public static glDetachShader: (...args: any[]) => any;
+  public static glDisableVertexAttribArray: (...args: any[]) => any;
+  public static glEnableVertexAttribArray: (...args: any[]) => any;
+  public static glFramebufferRenderbuffer: (...args: any[]) => any;
+  public static glFramebufferTexture2D: (...args: any[]) => any;
+  public static glGenBuffers: (...args: any[]) => any;
+  public static glGenFramebuffers: (...args: any[]) => any;
+  public static glGenRenderbuffers: (...args: any[]) => any;
+  public static glGenVertexArrays: (...args: any[]) => any;
+  public static glGenerateMipmap: (...args: any[]) => any;
+  public static glGetActiveAttrib: (...args: any[]) => any;
+  public static glGetActiveUniform: (...args: any[]) => any;
+  public static glGetAttribLocation: (...args: any[]) => any;
+  public static glGetBufferParameteriv: (...args: any[]) => any;
+  public static glGetBufferPointerv: (...args: any[]) => any;
+  public static glGetBufferSubData: (...args: any[]) => any;
+  public static glGetFramebufferAttachmentParameteriv: (...args: any[]) => any;
+  public static glGetProgramInfoLog: (...args: any[]) => any;
+  public static glGetProgramiv: (...args: any[]) => any;
+  public static glGetRenderbufferParameteriv: (...args: any[]) => any;
+  public static glGetShaderInfoLog: (...args: any[]) => any;
+  public static glGetShaderSource: (...args: any[]) => any;
+  public static glGetShaderiv: (...args: any[]) => any;
+  public static glGetUniformLocation: (...args: any[]) => any;
+  public static glGetVertexAttribPointerv: (...args: any[]) => any;
+  public static glGetVertexAttribdv: (...args: any[]) => any;
+  public static glGetVertexAttribfv: (...args: any[]) => any;
+  public static glGetVertexAttribiv: (...args: any[]) => any;
+  public static glIsBuffer: (...args: any[]) => any;
+  public static glIsFramebuffer: (...args: any[]) => any;
+  public static glIsProgram: (...args: any[]) => any;
+  public static glIsRenderbuffer: (...args: any[]) => any;
+  public static glIsShader: (...args: any[]) => any;
+  public static glIsVertexArray: (...args: any[]) => any;
+  public static glLinkProgram: (...args: any[]) => any;
+  public static glMapBuffer: (...args: any[]) => any;
+  public static glRenderbufferStorage: (...args: any[]) => any;
+  public static glShaderSource: (...args: any[]) => any;
+  public static glUniform1f: (...args: any[]) => any;
+  public static glUniform1fv: (...args: any[]) => any;
+  public static glUniform1i: (...args: any[]) => any;
+  public static glUniform1iv: (...args: any[]) => any;
+  public static glUniform2f: (...args: any[]) => any;
+  public static glUniform2fv: (...args: any[]) => any;
+  public static glUniform2i: (...args: any[]) => any;
+  public static glUniform2iv: (...args: any[]) => any;
+  public static glUniform3f: (...args: any[]) => any;
+  public static glUniform3fv: (...args: any[]) => any;
+  public static glUniform3i: (...args: any[]) => any;
+  public static glUniform3iv: (...args: any[]) => any;
+  public static glUniform4f: (...args: any[]) => any;
+  public static glUniform4fv: (...args: any[]) => any;
+  public static glUniform4i: (...args: any[]) => any;
+  public static glUniform4iv: (...args: any[]) => any;
+  public static glUniformMatrix2fv: (...args: any[]) => any;
+  public static glUniformMatrix3fv: (...args: any[]) => any;
+  public static glUniformMatrix4fv: (...args: any[]) => any;
+  public static glUnmapBuffer: (...args: any[]) => any;
+  public static glUseProgram: (...args: any[]) => any;
+  public static glValidateProgram: (...args: any[]) => any;
+  public static glVertexAttrib1d: (...args: any[]) => any;
+  public static glVertexAttrib1dv: (...args: any[]) => any;
+  public static glVertexAttrib1f: (...args: any[]) => any;
+  public static glVertexAttrib1fv: (...args: any[]) => any;
+  public static glVertexAttrib1s: (...args: any[]) => any;
+  public static glVertexAttrib1sv: (...args: any[]) => any;
+  public static glVertexAttrib2d: (...args: any[]) => any;
+  public static glVertexAttrib2dv: (...args: any[]) => any;
+  public static glVertexAttrib2f: (...args: any[]) => any;
+  public static glVertexAttrib2fv: (...args: any[]) => any;
+  public static glVertexAttrib2s: (...args: any[]) => any;
+  public static glVertexAttrib2sv: (...args: any[]) => any;
+  public static glVertexAttrib3d: (...args: any[]) => any;
+  public static glVertexAttrib3dv: (...args: any[]) => any;
+  public static glVertexAttrib3f: (...args: any[]) => any;
+  public static glVertexAttrib3fv: (...args: any[]) => any;
+  public static glVertexAttrib3s: (...args: any[]) => any;
+  public static glVertexAttrib3sv: (...args: any[]) => any;
+  public static glVertexAttrib4Nbv: (...args: any[]) => any;
+  public static glVertexAttrib4Niv: (...args: any[]) => any;
+  public static glVertexAttrib4Nsv: (...args: any[]) => any;
+  public static glVertexAttrib4Nub: (...args: any[]) => any;
+  public static glVertexAttrib4Nubv: (...args: any[]) => any;
+  public static glVertexAttrib4Nuiv: (...args: any[]) => any;
+  public static glVertexAttrib4Nusv: (...args: any[]) => any;
+  public static glVertexAttrib4bv: (...args: any[]) => any;
+  public static glVertexAttrib4d: (...args: any[]) => any;
+  public static glVertexAttrib4dv: (...args: any[]) => any;
+  public static glVertexAttrib4f: (...args: any[]) => any;
+  public static glVertexAttrib4fv: (...args: any[]) => any;
+  public static glVertexAttrib4iv: (...args: any[]) => any;
+  public static glVertexAttrib4s: (...args: any[]) => any;
+  public static glVertexAttrib4sv: (...args: any[]) => any;
+  public static glVertexAttrib4ubv: (...args: any[]) => any;
+  public static glVertexAttrib4uiv: (...args: any[]) => any;
+  public static glVertexAttrib4usv: (...args: any[]) => any;
+  public static glVertexAttribPointer: (...args: any[]) => any;
 }
 
 export default OpenGL32;
