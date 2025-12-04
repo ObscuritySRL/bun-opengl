@@ -75,8 +75,6 @@ const enum WindowStyle {
   WS_VISIBLE = 0x10000000,
 }
 
-// Null pointer constant for cleanup
-const NULL_PTR = 0 as unknown as Pointer;
 
 // -----------------------------------------------------------------------------
 // Window procedure and callbacks
@@ -156,8 +154,8 @@ function createWindow(): { hwnd: Pointer; hdc: Pointer; hdcU64: bigint } {
   const hdc = user32.symbols.GetDC(hwnd);
   if (!hdc) throw new Error(`GetDC failed: ${kernel32.symbols.GetLastError()}`);
 
-  // Setup pixel format (gdi32 uses u64 for HDC)
-  const hdcU64 = BigInt(hdc as unknown as number);
+  // Setup pixel format (gdi32 uses u64 for HDC, Pointer is internally a number)
+  const hdcU64 = BigInt(Number(hdc));
   const pixelFormat = gdi32.symbols.ChoosePixelFormat(hdcU64, PIXEL_FORMAT_DESCRIPTOR);
   if (pixelFormat === 0) throw new Error(`ChoosePixelFormat failed: ${kernel32.symbols.GetLastError()}`);
   if (!gdi32.symbols.SetPixelFormat(hdcU64, pixelFormat, PIXEL_FORMAT_DESCRIPTOR)) {
@@ -288,11 +286,9 @@ function main(): void {
   console.log('Creating OpenGL context...');
   const hglrc = createGLContext(hdc);
 
-  // Load WGL extensions for VSync control (optional)
-  const extensions = OpenGL32.LoadExtensions(['wglSwapIntervalEXT']);
-  if (extensions.wglSwapIntervalEXT) {
-    OpenGL32.wglSwapIntervalEXT(0); // 0 = VSync off, 1 = VSync on
-  }
+  // Preload WGL extensions for VSync control (optional)
+  OpenGL32.PreloadExtensions(['wglSwapIntervalEXT']);
+  OpenGL32.wglSwapIntervalEXT(0); // 0 = VSync off, 1 = VSync on
 
   console.log('Initializing OpenGL...');
   initGL();
@@ -328,7 +324,8 @@ function main(): void {
 
   // Cleanup
   console.log('Cleaning up...');
-  OpenGL32.wglMakeCurrent(NULL_PTR, NULL_PTR);
+  // @ts-expect-error null is valid for releasing context
+  OpenGL32.wglMakeCurrent(null, null);
   OpenGL32.wglDeleteContext(hglrc);
   user32.symbols.ReleaseDC(hwnd, hdc);
 

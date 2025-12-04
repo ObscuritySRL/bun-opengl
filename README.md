@@ -88,7 +88,38 @@ OpenGL32.wglMakeCurrent(hdc, hglrc);
 // OpenGL32.glClear(GLenum.GL_COLOR_BUFFER_BIT);
 ```
 
-For modern functionality, use `wglGetProcAddress` to fetch extension entry points. A helper for this is coming soon.
+For modern functionality, use `wglGetProcAddress` to fetch extension entry points—or use the built-in extension support described below.
+
+## OpenGL Extensions
+
+OpenGL extensions (OpenGL 1.5+, 2.0+, etc.) are not exported by `opengl32.dll` and must be loaded at runtime via `wglGetProcAddress`. This package provides built-in support for common extensions.
+
+**Important**: Extensions require an active OpenGL context. Call `PreloadExtensions()` only after `wglMakeCurrent()` succeeds.
+
+```ts
+// 1. Create and activate an OpenGL context first
+const hglrc = OpenGL32.wglCreateContext(hdc);
+OpenGL32.wglMakeCurrent(hdc, hglrc);
+
+// 2. Now preload extensions (context must be current!)
+OpenGL32.PreloadExtensions(['wglSwapIntervalEXT', 'glGenBuffers', 'glCreateShader']);
+
+// Or preload all available extensions at once
+OpenGL32.PreloadExtensions();
+
+// 3. Use extensions directly
+OpenGL32.wglSwapIntervalEXT(1); // Enable VSync
+```
+
+Extension methods also lazy-load on first call (just like core GL 1.1 methods), so `PreloadExtensions()` is optional but recommended for hot paths.
+
+### Available Extensions
+
+- **WGL**: `wglSwapIntervalEXT`, `wglGetSwapIntervalEXT`, `wglChoosePixelFormatARB`, `wglCreateContextAttribsARB`, `wglGetExtensionsStringARB`, `wglGetExtensionsStringEXT`
+- **VBO** (OpenGL 1.5+): `glGenBuffers`, `glBindBuffer`, `glBufferData`, `glDeleteBuffers`, `glMapBuffer`, `glUnmapBuffer`, etc.
+- **Shaders** (OpenGL 2.0+): `glCreateShader`, `glCompileShader`, `glCreateProgram`, `glLinkProgram`, `glUseProgram`, `glUniform*`, etc.
+- **VAO** (OpenGL 3.0+): `glGenVertexArrays`, `glBindVertexArray`, `glDeleteVertexArrays`
+- **FBO** (OpenGL 3.0+): `glGenFramebuffers`, `glBindFramebuffer`, `glFramebufferTexture2D`, `glCheckFramebufferStatus`, etc.
 
 ## Notes
 

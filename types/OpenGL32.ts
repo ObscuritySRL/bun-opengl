@@ -543,10 +543,17 @@ export type GLubyte = number;
 export type GLuint = number;
 export type GLushort = number;
 
+// Extension types (OpenGL 1.5+/2.0+)
+export type GLchar = number;
+export type GLsizeiptr = number | bigint;
+export type GLintptr = number | bigint;
+
 // Pointer variants for common GL types
 export type GLboolean_ = Pointer;
 export type GLbyte_ = Pointer;
+export type GLchar_ = Pointer;
 export type GLclampd_ = Pointer;
+export type GLsizei_ = Pointer;
 export type GLclampf_ = Pointer;
 export type GLdouble_ = Pointer;
 export type GLenum_ = Pointer;

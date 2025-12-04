@@ -1,4 +1,6 @@
-import { type FFIFunction, FFIType, dlopen, CFunction, ptr } from 'bun:ffi';
+import '../runtime/extensions';
+
+import { type FFIFunction, FFIType, dlopen, CFunction } from 'bun:ffi';
 
 import type {
   BOOL,
@@ -10,19 +12,24 @@ import type {
   GLboolean_,
   GLbyte,
   GLbyte_,
+  GLchar_,
   GLclampd,
   GLclampf,
   GLclampf_,
   GLdouble,
   GLdouble_,
   GLenum,
+  GLenum_,
   GLfloat,
   GLfloat_,
   GLint,
   GLint_,
+  GLintptr,
   GLshort,
   GLshort_,
   GLsizei,
+  GLsizei_,
+  GLsizeiptr,
   GLubyte,
   GLubyte_,
   GLuint,
@@ -106,7 +113,9 @@ class OpenGL32 {
   public static Preload(methods?: (keyof typeof OpenGL32.Symbols)[]): void {
     methods ??= Object.keys(OpenGL32.Symbols) as (keyof typeof OpenGL32.Symbols)[];
 
-    const symbols = Object.fromEntries(methods.filter((method) => Object.getOwnPropertyDescriptor(OpenGL32, method)?.configurable !== false).map((method) => [method, OpenGL32.Symbols[method]]));
+    const symbols = Object.fromEntries(
+      methods.filter((method) => Object.getOwnPropertyDescriptor(OpenGL32, method)?.configurable !== false).map((method) => [method, OpenGL32.Symbols[method]]) //
+    );
 
     const library = dlopen('opengl32.dll', symbols);
 
@@ -118,57 +127,66 @@ class OpenGL32 {
   }
 
   /**
+   * Lazily binds a single OpenGL extension via `wglGetProcAddress` and memoizes it.
+   *
+   * Requires an active OpenGL context. If the extension is unavailable, throws an error.
+   * Subsequent calls go directly through the memoized native function.
+   *
+   * @param method Exact extension name from `ExtensionSymbols`.
+   * @returns The bound native function.
+   * @throws Error if extension is not available.
+   */
+  private static LoadExtension<T extends keyof typeof OpenGL32.ExtensionSymbols>(method: T): (typeof OpenGL32)[T] {
+    const skip = Object.getOwnPropertyDescriptor(OpenGL32, method)?.configurable === false;
+
+    if (skip) {
+      return OpenGL32[method];
+    }
+
+    const lpszProc = Buffer.from(`${method}\0`, 'utf8');
+    const proc = OpenGL32.wglGetProcAddress(lpszProc.ptr);
+
+    if (!proc || proc === 0) {
+      throw new Error(`OpenGL extension '${method}' is not available. Ensure an OpenGL context is current.`);
+    }
+
+    const spec = OpenGL32.ExtensionSymbols[method];
+    const fn = CFunction({
+      ptr: proc,
+      args: spec.args,
+      returns: spec.returns,
+    });
+
+    Object.defineProperty(OpenGL32, method, { configurable: false, value: fn });
+
+    return OpenGL32[method];
+  }
+
+  /**
    * Eagerly loads multiple OpenGL extensions at once.
    *
    * Requires an active OpenGL context. Pass a subset of extension names to load
    * only what you need; when omitted, all extensions in `ExtensionSymbols` are loaded.
-   * Returns an object indicating which extensions were successfully loaded.
+   * Unavailable extensions are silently skipped.
    *
    * @param methods Optional list of extension names to load.
-   * @returns Object mapping extension names to load success (true/false).
    * @example
    * ```ts
    * // After creating an OpenGL context:
-   * const loaded = OpenGL32.LoadExtensions(['wglSwapIntervalEXT', 'wglGetSwapIntervalEXT']);
-   * if (loaded.wglSwapIntervalEXT) {
-   *   OpenGL32.wglSwapIntervalEXT(1); // Enable VSync
-   * }
+   * OpenGL32.PreloadExtensions(['wglSwapIntervalEXT', 'wglGetSwapIntervalEXT']);
+   * OpenGL32.wglSwapIntervalEXT(1); // Enable VSync
    * ```
    */
-  public static LoadExtensions(methods?: (keyof typeof OpenGL32.ExtensionSymbols)[]): Record<string, boolean> {
+  public static PreloadExtensions(methods?: (keyof typeof OpenGL32.ExtensionSymbols)[]): void {
     methods ??= Object.keys(OpenGL32.ExtensionSymbols) as (keyof typeof OpenGL32.ExtensionSymbols)[];
 
-    const result: Record<string, boolean> = {};
-
     for (const method of methods) {
-      const skip = Object.getOwnPropertyDescriptor(OpenGL32, method)?.configurable === false;
-
-      if (skip) {
-        result[method] = true;
-        continue;
+      try {
+        OpenGL32.LoadExtension(method);
+      } catch {
+        // Extension not available, skip silently
       }
-
-      const procName = Buffer.from(method + '\0', 'utf8');
-      const procAddress = OpenGL32.wglGetProcAddress(ptr(procName));
-
-      if (!procAddress || procAddress === 0) {
-        result[method] = false;
-        continue;
-      }
-
-      const spec = OpenGL32.ExtensionSymbols[method];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const fn = new (CFunction as any)({
-        ptr: procAddress,
-        args: spec.args,
-        returns: spec.returns,
-      });
-
-      Object.defineProperty(OpenGL32, method, { configurable: false, value: fn });
-      result[method] = true;
     }
-
-    return result;
   }
 
   /**
@@ -2492,132 +2510,406 @@ class OpenGL32 {
     return OpenGL32.Load('wglSwapMultipleBuffers')(n, lpBuffers);
   }
 
-  // Extension stubs - these are replaced by LoadExtensions() at runtime
-  public static wglChoosePixelFormatARB: (...args: any[]) => any;
-  public static wglCreateContextAttribsARB: (...args: any[]) => any;
-  public static wglGetExtensionsStringARB: (...args: any[]) => any;
-  public static wglGetExtensionsStringEXT: (...args: any[]) => any;
-  public static wglGetPixelFormatAttribfvARB: (...args: any[]) => any;
-  public static wglGetPixelFormatAttribivARB: (...args: any[]) => any;
-  public static wglGetSwapIntervalEXT: (...args: any[]) => any;
-  public static wglSwapIntervalEXT: (...args: any[]) => any;
+  // ---------------------------------------------------------------------------
+  // WGL Extensions (lazy-loaded via wglGetProcAddress)
+  // ---------------------------------------------------------------------------
 
-  // GL extension stubs
-  public static glAttachShader: (...args: any[]) => any;
-  public static glBindAttribLocation: (...args: any[]) => any;
-  public static glBindBuffer: (...args: any[]) => any;
-  public static glBindFramebuffer: (...args: any[]) => any;
-  public static glBindRenderbuffer: (...args: any[]) => any;
-  public static glBindVertexArray: (...args: any[]) => any;
-  public static glBufferData: (...args: any[]) => any;
-  public static glBufferSubData: (...args: any[]) => any;
-  public static glCheckFramebufferStatus: (...args: any[]) => any;
-  public static glCompileShader: (...args: any[]) => any;
-  public static glCreateProgram: (...args: any[]) => any;
-  public static glCreateShader: (...args: any[]) => any;
-  public static glDeleteBuffers: (...args: any[]) => any;
-  public static glDeleteFramebuffers: (...args: any[]) => any;
-  public static glDeleteProgram: (...args: any[]) => any;
-  public static glDeleteRenderbuffers: (...args: any[]) => any;
-  public static glDeleteShader: (...args: any[]) => any;
-  public static glDeleteVertexArrays: (...args: any[]) => any;
-  public static glDetachShader: (...args: any[]) => any;
-  public static glDisableVertexAttribArray: (...args: any[]) => any;
-  public static glEnableVertexAttribArray: (...args: any[]) => any;
-  public static glFramebufferRenderbuffer: (...args: any[]) => any;
-  public static glFramebufferTexture2D: (...args: any[]) => any;
-  public static glGenBuffers: (...args: any[]) => any;
-  public static glGenFramebuffers: (...args: any[]) => any;
-  public static glGenRenderbuffers: (...args: any[]) => any;
-  public static glGenVertexArrays: (...args: any[]) => any;
-  public static glGenerateMipmap: (...args: any[]) => any;
-  public static glGetActiveAttrib: (...args: any[]) => any;
-  public static glGetActiveUniform: (...args: any[]) => any;
-  public static glGetAttribLocation: (...args: any[]) => any;
-  public static glGetBufferParameteriv: (...args: any[]) => any;
-  public static glGetBufferPointerv: (...args: any[]) => any;
-  public static glGetBufferSubData: (...args: any[]) => any;
-  public static glGetFramebufferAttachmentParameteriv: (...args: any[]) => any;
-  public static glGetProgramInfoLog: (...args: any[]) => any;
-  public static glGetProgramiv: (...args: any[]) => any;
-  public static glGetRenderbufferParameteriv: (...args: any[]) => any;
-  public static glGetShaderInfoLog: (...args: any[]) => any;
-  public static glGetShaderSource: (...args: any[]) => any;
-  public static glGetShaderiv: (...args: any[]) => any;
-  public static glGetUniformLocation: (...args: any[]) => any;
-  public static glGetVertexAttribPointerv: (...args: any[]) => any;
-  public static glGetVertexAttribdv: (...args: any[]) => any;
-  public static glGetVertexAttribfv: (...args: any[]) => any;
-  public static glGetVertexAttribiv: (...args: any[]) => any;
-  public static glIsBuffer: (...args: any[]) => any;
-  public static glIsFramebuffer: (...args: any[]) => any;
-  public static glIsProgram: (...args: any[]) => any;
-  public static glIsRenderbuffer: (...args: any[]) => any;
-  public static glIsShader: (...args: any[]) => any;
-  public static glIsVertexArray: (...args: any[]) => any;
-  public static glLinkProgram: (...args: any[]) => any;
-  public static glMapBuffer: (...args: any[]) => any;
-  public static glRenderbufferStorage: (...args: any[]) => any;
-  public static glShaderSource: (...args: any[]) => any;
-  public static glUniform1f: (...args: any[]) => any;
-  public static glUniform1fv: (...args: any[]) => any;
-  public static glUniform1i: (...args: any[]) => any;
-  public static glUniform1iv: (...args: any[]) => any;
-  public static glUniform2f: (...args: any[]) => any;
-  public static glUniform2fv: (...args: any[]) => any;
-  public static glUniform2i: (...args: any[]) => any;
-  public static glUniform2iv: (...args: any[]) => any;
-  public static glUniform3f: (...args: any[]) => any;
-  public static glUniform3fv: (...args: any[]) => any;
-  public static glUniform3i: (...args: any[]) => any;
-  public static glUniform3iv: (...args: any[]) => any;
-  public static glUniform4f: (...args: any[]) => any;
-  public static glUniform4fv: (...args: any[]) => any;
-  public static glUniform4i: (...args: any[]) => any;
-  public static glUniform4iv: (...args: any[]) => any;
-  public static glUniformMatrix2fv: (...args: any[]) => any;
-  public static glUniformMatrix3fv: (...args: any[]) => any;
-  public static glUniformMatrix4fv: (...args: any[]) => any;
-  public static glUnmapBuffer: (...args: any[]) => any;
-  public static glUseProgram: (...args: any[]) => any;
-  public static glValidateProgram: (...args: any[]) => any;
-  public static glVertexAttrib1d: (...args: any[]) => any;
-  public static glVertexAttrib1dv: (...args: any[]) => any;
-  public static glVertexAttrib1f: (...args: any[]) => any;
-  public static glVertexAttrib1fv: (...args: any[]) => any;
-  public static glVertexAttrib1s: (...args: any[]) => any;
-  public static glVertexAttrib1sv: (...args: any[]) => any;
-  public static glVertexAttrib2d: (...args: any[]) => any;
-  public static glVertexAttrib2dv: (...args: any[]) => any;
-  public static glVertexAttrib2f: (...args: any[]) => any;
-  public static glVertexAttrib2fv: (...args: any[]) => any;
-  public static glVertexAttrib2s: (...args: any[]) => any;
-  public static glVertexAttrib2sv: (...args: any[]) => any;
-  public static glVertexAttrib3d: (...args: any[]) => any;
-  public static glVertexAttrib3dv: (...args: any[]) => any;
-  public static glVertexAttrib3f: (...args: any[]) => any;
-  public static glVertexAttrib3fv: (...args: any[]) => any;
-  public static glVertexAttrib3s: (...args: any[]) => any;
-  public static glVertexAttrib3sv: (...args: any[]) => any;
-  public static glVertexAttrib4Nbv: (...args: any[]) => any;
-  public static glVertexAttrib4Niv: (...args: any[]) => any;
-  public static glVertexAttrib4Nsv: (...args: any[]) => any;
-  public static glVertexAttrib4Nub: (...args: any[]) => any;
-  public static glVertexAttrib4Nubv: (...args: any[]) => any;
-  public static glVertexAttrib4Nuiv: (...args: any[]) => any;
-  public static glVertexAttrib4Nusv: (...args: any[]) => any;
-  public static glVertexAttrib4bv: (...args: any[]) => any;
-  public static glVertexAttrib4d: (...args: any[]) => any;
-  public static glVertexAttrib4dv: (...args: any[]) => any;
-  public static glVertexAttrib4f: (...args: any[]) => any;
-  public static glVertexAttrib4fv: (...args: any[]) => any;
-  public static glVertexAttrib4iv: (...args: any[]) => any;
-  public static glVertexAttrib4s: (...args: any[]) => any;
-  public static glVertexAttrib4sv: (...args: any[]) => any;
-  public static glVertexAttrib4ubv: (...args: any[]) => any;
-  public static glVertexAttrib4uiv: (...args: any[]) => any;
-  public static glVertexAttrib4usv: (...args: any[]) => any;
-  public static glVertexAttribPointer: (...args: any[]) => any;
+  public static wglChoosePixelFormatARB(hdc: HDC, piAttribIList: GLint_, pfAttribFList: GLfloat_, nMaxFormats: UINT, piFormats: GLint_, nNumFormats: GLuint_): BOOL {
+    return OpenGL32.LoadExtension('wglChoosePixelFormatARB')(hdc, piAttribIList, pfAttribFList, nMaxFormats, piFormats, nNumFormats);
+  }
+  public static wglCreateContextAttribsARB(hdc: HDC, hShareContext: HGLRC, attribList: GLint_): HGLRC {
+    return OpenGL32.LoadExtension('wglCreateContextAttribsARB')(hdc, hShareContext, attribList);
+  }
+  public static wglGetExtensionsStringARB(hdc: HDC): GLchar_ {
+    return OpenGL32.LoadExtension('wglGetExtensionsStringARB')(hdc);
+  }
+  public static wglGetExtensionsStringEXT(): GLchar_ {
+    return OpenGL32.LoadExtension('wglGetExtensionsStringEXT')();
+  }
+  public static wglGetPixelFormatAttribfvARB(hdc: HDC, iPixelFormat: INT, iLayerPlane: INT, nAttributes: UINT, piAttributes: GLint_, pfValues: GLfloat_): BOOL {
+    return OpenGL32.LoadExtension('wglGetPixelFormatAttribfvARB')(hdc, iPixelFormat, iLayerPlane, nAttributes, piAttributes, pfValues);
+  }
+  public static wglGetPixelFormatAttribivARB(hdc: HDC, iPixelFormat: INT, iLayerPlane: INT, nAttributes: UINT, piAttributes: GLint_, piValues: GLint_): BOOL {
+    return OpenGL32.LoadExtension('wglGetPixelFormatAttribivARB')(hdc, iPixelFormat, iLayerPlane, nAttributes, piAttributes, piValues);
+  }
+  public static wglGetSwapIntervalEXT(): INT {
+    return OpenGL32.LoadExtension('wglGetSwapIntervalEXT')();
+  }
+  public static wglSwapIntervalEXT(interval: INT): BOOL {
+    return OpenGL32.LoadExtension('wglSwapIntervalEXT')(interval);
+  }
+
+  // ---------------------------------------------------------------------------
+  // GL Extensions - VBO (lazy-loaded via wglGetProcAddress)
+  // ---------------------------------------------------------------------------
+
+  public static glBindBuffer(target: GLenum, buffer: GLuint): void {
+    return OpenGL32.LoadExtension('glBindBuffer')(target, buffer);
+  }
+  public static glBufferData(target: GLenum, size: GLsizeiptr, data: GLvoid_, usage: GLenum): void {
+    return OpenGL32.LoadExtension('glBufferData')(target, size, data, usage);
+  }
+  public static glBufferSubData(target: GLenum, offset: GLintptr, size: GLsizeiptr, data: GLvoid_): void {
+    return OpenGL32.LoadExtension('glBufferSubData')(target, offset, size, data);
+  }
+  public static glDeleteBuffers(n: GLsizei, buffers: GLuint_): void {
+    return OpenGL32.LoadExtension('glDeleteBuffers')(n, buffers);
+  }
+  public static glGenBuffers(n: GLsizei, buffers: GLuint_): void {
+    return OpenGL32.LoadExtension('glGenBuffers')(n, buffers);
+  }
+  public static glGetBufferParameteriv(target: GLenum, pname: GLenum, params: GLint_): void {
+    return OpenGL32.LoadExtension('glGetBufferParameteriv')(target, pname, params);
+  }
+  public static glGetBufferPointerv(target: GLenum, pname: GLenum, params: GLvoid_): void {
+    return OpenGL32.LoadExtension('glGetBufferPointerv')(target, pname, params);
+  }
+  public static glGetBufferSubData(target: GLenum, offset: GLintptr, size: GLsizeiptr, data: GLvoid_): void {
+    return OpenGL32.LoadExtension('glGetBufferSubData')(target, offset, size, data);
+  }
+  public static glIsBuffer(buffer: GLuint): GLboolean {
+    return OpenGL32.LoadExtension('glIsBuffer')(buffer);
+  }
+  public static glMapBuffer(target: GLenum, access: GLenum): GLvoid_ {
+    return OpenGL32.LoadExtension('glMapBuffer')(target, access);
+  }
+  public static glUnmapBuffer(target: GLenum): GLboolean {
+    return OpenGL32.LoadExtension('glUnmapBuffer')(target);
+  }
+
+  // ---------------------------------------------------------------------------
+  // GL Extensions - Shaders (lazy-loaded via wglGetProcAddress)
+  // ---------------------------------------------------------------------------
+
+  public static glAttachShader(program: GLuint, shader: GLuint): void {
+    return OpenGL32.LoadExtension('glAttachShader')(program, shader);
+  }
+  public static glCompileShader(shader: GLuint): void {
+    return OpenGL32.LoadExtension('glCompileShader')(shader);
+  }
+  public static glCreateProgram(): GLuint {
+    return OpenGL32.LoadExtension('glCreateProgram')();
+  }
+  public static glCreateShader(type: GLenum): GLuint {
+    return OpenGL32.LoadExtension('glCreateShader')(type);
+  }
+  public static glDeleteProgram(program: GLuint): void {
+    return OpenGL32.LoadExtension('glDeleteProgram')(program);
+  }
+  public static glDeleteShader(shader: GLuint): void {
+    return OpenGL32.LoadExtension('glDeleteShader')(shader);
+  }
+  public static glDetachShader(program: GLuint, shader: GLuint): void {
+    return OpenGL32.LoadExtension('glDetachShader')(program, shader);
+  }
+  public static glGetProgramInfoLog(program: GLuint, bufSize: GLsizei, length: GLsizei_, infoLog: GLchar_): void {
+    return OpenGL32.LoadExtension('glGetProgramInfoLog')(program, bufSize, length, infoLog);
+  }
+  public static glGetProgramiv(program: GLuint, pname: GLenum, params: GLint_): void {
+    return OpenGL32.LoadExtension('glGetProgramiv')(program, pname, params);
+  }
+  public static glGetShaderInfoLog(shader: GLuint, bufSize: GLsizei, length: GLsizei_, infoLog: GLchar_): void {
+    return OpenGL32.LoadExtension('glGetShaderInfoLog')(shader, bufSize, length, infoLog);
+  }
+  public static glGetShaderiv(shader: GLuint, pname: GLenum, params: GLint_): void {
+    return OpenGL32.LoadExtension('glGetShaderiv')(shader, pname, params);
+  }
+  public static glGetShaderSource(shader: GLuint, bufSize: GLsizei, length: GLsizei_, source: GLchar_): void {
+    return OpenGL32.LoadExtension('glGetShaderSource')(shader, bufSize, length, source);
+  }
+  public static glGetUniformLocation(program: GLuint, name: GLchar_): GLint {
+    return OpenGL32.LoadExtension('glGetUniformLocation')(program, name);
+  }
+  public static glIsProgram(program: GLuint): GLboolean {
+    return OpenGL32.LoadExtension('glIsProgram')(program);
+  }
+  public static glIsShader(shader: GLuint): GLboolean {
+    return OpenGL32.LoadExtension('glIsShader')(shader);
+  }
+  public static glLinkProgram(program: GLuint): void {
+    return OpenGL32.LoadExtension('glLinkProgram')(program);
+  }
+  public static glShaderSource(shader: GLuint, count: GLsizei, string: GLchar_, length: GLint_): void {
+    return OpenGL32.LoadExtension('glShaderSource')(shader, count, string, length);
+  }
+  public static glUseProgram(program: GLuint): void {
+    return OpenGL32.LoadExtension('glUseProgram')(program);
+  }
+  public static glValidateProgram(program: GLuint): void {
+    return OpenGL32.LoadExtension('glValidateProgram')(program);
+  }
+
+  // Uniforms
+  public static glUniform1f(location: GLint, v0: GLfloat): void {
+    return OpenGL32.LoadExtension('glUniform1f')(location, v0);
+  }
+  public static glUniform1fv(location: GLint, count: GLsizei, value: GLfloat_): void {
+    return OpenGL32.LoadExtension('glUniform1fv')(location, count, value);
+  }
+  public static glUniform1i(location: GLint, v0: GLint): void {
+    return OpenGL32.LoadExtension('glUniform1i')(location, v0);
+  }
+  public static glUniform1iv(location: GLint, count: GLsizei, value: GLint_): void {
+    return OpenGL32.LoadExtension('glUniform1iv')(location, count, value);
+  }
+  public static glUniform2f(location: GLint, v0: GLfloat, v1: GLfloat): void {
+    return OpenGL32.LoadExtension('glUniform2f')(location, v0, v1);
+  }
+  public static glUniform2fv(location: GLint, count: GLsizei, value: GLfloat_): void {
+    return OpenGL32.LoadExtension('glUniform2fv')(location, count, value);
+  }
+  public static glUniform2i(location: GLint, v0: GLint, v1: GLint): void {
+    return OpenGL32.LoadExtension('glUniform2i')(location, v0, v1);
+  }
+  public static glUniform2iv(location: GLint, count: GLsizei, value: GLint_): void {
+    return OpenGL32.LoadExtension('glUniform2iv')(location, count, value);
+  }
+  public static glUniform3f(location: GLint, v0: GLfloat, v1: GLfloat, v2: GLfloat): void {
+    return OpenGL32.LoadExtension('glUniform3f')(location, v0, v1, v2);
+  }
+  public static glUniform3fv(location: GLint, count: GLsizei, value: GLfloat_): void {
+    return OpenGL32.LoadExtension('glUniform3fv')(location, count, value);
+  }
+  public static glUniform3i(location: GLint, v0: GLint, v1: GLint, v2: GLint): void {
+    return OpenGL32.LoadExtension('glUniform3i')(location, v0, v1, v2);
+  }
+  public static glUniform3iv(location: GLint, count: GLsizei, value: GLint_): void {
+    return OpenGL32.LoadExtension('glUniform3iv')(location, count, value);
+  }
+  public static glUniform4f(location: GLint, v0: GLfloat, v1: GLfloat, v2: GLfloat, v3: GLfloat): void {
+    return OpenGL32.LoadExtension('glUniform4f')(location, v0, v1, v2, v3);
+  }
+  public static glUniform4fv(location: GLint, count: GLsizei, value: GLfloat_): void {
+    return OpenGL32.LoadExtension('glUniform4fv')(location, count, value);
+  }
+  public static glUniform4i(location: GLint, v0: GLint, v1: GLint, v2: GLint, v3: GLint): void {
+    return OpenGL32.LoadExtension('glUniform4i')(location, v0, v1, v2, v3);
+  }
+  public static glUniform4iv(location: GLint, count: GLsizei, value: GLint_): void {
+    return OpenGL32.LoadExtension('glUniform4iv')(location, count, value);
+  }
+  public static glUniformMatrix2fv(location: GLint, count: GLsizei, transpose: GLboolean, value: GLfloat_): void {
+    return OpenGL32.LoadExtension('glUniformMatrix2fv')(location, count, transpose, value);
+  }
+  public static glUniformMatrix3fv(location: GLint, count: GLsizei, transpose: GLboolean, value: GLfloat_): void {
+    return OpenGL32.LoadExtension('glUniformMatrix3fv')(location, count, transpose, value);
+  }
+  public static glUniformMatrix4fv(location: GLint, count: GLsizei, transpose: GLboolean, value: GLfloat_): void {
+    return OpenGL32.LoadExtension('glUniformMatrix4fv')(location, count, transpose, value);
+  }
+
+  // ---------------------------------------------------------------------------
+  // GL Extensions - Vertex Attribs (lazy-loaded via wglGetProcAddress)
+  // ---------------------------------------------------------------------------
+
+  public static glBindAttribLocation(program: GLuint, index: GLuint, name: GLchar_): void {
+    return OpenGL32.LoadExtension('glBindAttribLocation')(program, index, name);
+  }
+  public static glDisableVertexAttribArray(index: GLuint): void {
+    return OpenGL32.LoadExtension('glDisableVertexAttribArray')(index);
+  }
+  public static glEnableVertexAttribArray(index: GLuint): void {
+    return OpenGL32.LoadExtension('glEnableVertexAttribArray')(index);
+  }
+  public static glGetActiveAttrib(program: GLuint, index: GLuint, bufSize: GLsizei, length: GLsizei_, size: GLint_, type: GLenum_, name: GLchar_): void {
+    return OpenGL32.LoadExtension('glGetActiveAttrib')(program, index, bufSize, length, size, type, name);
+  }
+  public static glGetActiveUniform(program: GLuint, index: GLuint, bufSize: GLsizei, length: GLsizei_, size: GLint_, type: GLenum_, name: GLchar_): void {
+    return OpenGL32.LoadExtension('glGetActiveUniform')(program, index, bufSize, length, size, type, name);
+  }
+  public static glGetAttribLocation(program: GLuint, name: GLchar_): GLint {
+    return OpenGL32.LoadExtension('glGetAttribLocation')(program, name);
+  }
+  public static glGetVertexAttribdv(index: GLuint, pname: GLenum, params: GLdouble_): void {
+    return OpenGL32.LoadExtension('glGetVertexAttribdv')(index, pname, params);
+  }
+  public static glGetVertexAttribfv(index: GLuint, pname: GLenum, params: GLfloat_): void {
+    return OpenGL32.LoadExtension('glGetVertexAttribfv')(index, pname, params);
+  }
+  public static glGetVertexAttribiv(index: GLuint, pname: GLenum, params: GLint_): void {
+    return OpenGL32.LoadExtension('glGetVertexAttribiv')(index, pname, params);
+  }
+  public static glGetVertexAttribPointerv(index: GLuint, pname: GLenum, pointer: GLvoid_): void {
+    return OpenGL32.LoadExtension('glGetVertexAttribPointerv')(index, pname, pointer);
+  }
+  public static glVertexAttrib1d(index: GLuint, x: GLdouble): void {
+    return OpenGL32.LoadExtension('glVertexAttrib1d')(index, x);
+  }
+  public static glVertexAttrib1dv(index: GLuint, v: GLdouble_): void {
+    return OpenGL32.LoadExtension('glVertexAttrib1dv')(index, v);
+  }
+  public static glVertexAttrib1f(index: GLuint, x: GLfloat): void {
+    return OpenGL32.LoadExtension('glVertexAttrib1f')(index, x);
+  }
+  public static glVertexAttrib1fv(index: GLuint, v: GLfloat_): void {
+    return OpenGL32.LoadExtension('glVertexAttrib1fv')(index, v);
+  }
+  public static glVertexAttrib1s(index: GLuint, x: GLshort): void {
+    return OpenGL32.LoadExtension('glVertexAttrib1s')(index, x);
+  }
+  public static glVertexAttrib1sv(index: GLuint, v: GLshort_): void {
+    return OpenGL32.LoadExtension('glVertexAttrib1sv')(index, v);
+  }
+  public static glVertexAttrib2d(index: GLuint, x: GLdouble, y: GLdouble): void {
+    return OpenGL32.LoadExtension('glVertexAttrib2d')(index, x, y);
+  }
+  public static glVertexAttrib2dv(index: GLuint, v: GLdouble_): void {
+    return OpenGL32.LoadExtension('glVertexAttrib2dv')(index, v);
+  }
+  public static glVertexAttrib2f(index: GLuint, x: GLfloat, y: GLfloat): void {
+    return OpenGL32.LoadExtension('glVertexAttrib2f')(index, x, y);
+  }
+  public static glVertexAttrib2fv(index: GLuint, v: GLfloat_): void {
+    return OpenGL32.LoadExtension('glVertexAttrib2fv')(index, v);
+  }
+  public static glVertexAttrib2s(index: GLuint, x: GLshort, y: GLshort): void {
+    return OpenGL32.LoadExtension('glVertexAttrib2s')(index, x, y);
+  }
+  public static glVertexAttrib2sv(index: GLuint, v: GLshort_): void {
+    return OpenGL32.LoadExtension('glVertexAttrib2sv')(index, v);
+  }
+  public static glVertexAttrib3d(index: GLuint, x: GLdouble, y: GLdouble, z: GLdouble): void {
+    return OpenGL32.LoadExtension('glVertexAttrib3d')(index, x, y, z);
+  }
+  public static glVertexAttrib3dv(index: GLuint, v: GLdouble_): void {
+    return OpenGL32.LoadExtension('glVertexAttrib3dv')(index, v);
+  }
+  public static glVertexAttrib3f(index: GLuint, x: GLfloat, y: GLfloat, z: GLfloat): void {
+    return OpenGL32.LoadExtension('glVertexAttrib3f')(index, x, y, z);
+  }
+  public static glVertexAttrib3fv(index: GLuint, v: GLfloat_): void {
+    return OpenGL32.LoadExtension('glVertexAttrib3fv')(index, v);
+  }
+  public static glVertexAttrib3s(index: GLuint, x: GLshort, y: GLshort, z: GLshort): void {
+    return OpenGL32.LoadExtension('glVertexAttrib3s')(index, x, y, z);
+  }
+  public static glVertexAttrib3sv(index: GLuint, v: GLshort_): void {
+    return OpenGL32.LoadExtension('glVertexAttrib3sv')(index, v);
+  }
+  public static glVertexAttrib4bv(index: GLuint, v: GLbyte_): void {
+    return OpenGL32.LoadExtension('glVertexAttrib4bv')(index, v);
+  }
+  public static glVertexAttrib4d(index: GLuint, x: GLdouble, y: GLdouble, z: GLdouble, w: GLdouble): void {
+    return OpenGL32.LoadExtension('glVertexAttrib4d')(index, x, y, z, w);
+  }
+  public static glVertexAttrib4dv(index: GLuint, v: GLdouble_): void {
+    return OpenGL32.LoadExtension('glVertexAttrib4dv')(index, v);
+  }
+  public static glVertexAttrib4f(index: GLuint, x: GLfloat, y: GLfloat, z: GLfloat, w: GLfloat): void {
+    return OpenGL32.LoadExtension('glVertexAttrib4f')(index, x, y, z, w);
+  }
+  public static glVertexAttrib4fv(index: GLuint, v: GLfloat_): void {
+    return OpenGL32.LoadExtension('glVertexAttrib4fv')(index, v);
+  }
+  public static glVertexAttrib4iv(index: GLuint, v: GLint_): void {
+    return OpenGL32.LoadExtension('glVertexAttrib4iv')(index, v);
+  }
+  public static glVertexAttrib4Nbv(index: GLuint, v: GLbyte_): void {
+    return OpenGL32.LoadExtension('glVertexAttrib4Nbv')(index, v);
+  }
+  public static glVertexAttrib4Niv(index: GLuint, v: GLint_): void {
+    return OpenGL32.LoadExtension('glVertexAttrib4Niv')(index, v);
+  }
+  public static glVertexAttrib4Nsv(index: GLuint, v: GLshort_): void {
+    return OpenGL32.LoadExtension('glVertexAttrib4Nsv')(index, v);
+  }
+  public static glVertexAttrib4Nub(index: GLuint, x: GLubyte, y: GLubyte, z: GLubyte, w: GLubyte): void {
+    return OpenGL32.LoadExtension('glVertexAttrib4Nub')(index, x, y, z, w);
+  }
+  public static glVertexAttrib4Nubv(index: GLuint, v: GLubyte_): void {
+    return OpenGL32.LoadExtension('glVertexAttrib4Nubv')(index, v);
+  }
+  public static glVertexAttrib4Nuiv(index: GLuint, v: GLuint_): void {
+    return OpenGL32.LoadExtension('glVertexAttrib4Nuiv')(index, v);
+  }
+  public static glVertexAttrib4Nusv(index: GLuint, v: GLushort_): void {
+    return OpenGL32.LoadExtension('glVertexAttrib4Nusv')(index, v);
+  }
+  public static glVertexAttrib4s(index: GLuint, x: GLshort, y: GLshort, z: GLshort, w: GLshort): void {
+    return OpenGL32.LoadExtension('glVertexAttrib4s')(index, x, y, z, w);
+  }
+  public static glVertexAttrib4sv(index: GLuint, v: GLshort_): void {
+    return OpenGL32.LoadExtension('glVertexAttrib4sv')(index, v);
+  }
+  public static glVertexAttrib4ubv(index: GLuint, v: GLubyte_): void {
+    return OpenGL32.LoadExtension('glVertexAttrib4ubv')(index, v);
+  }
+  public static glVertexAttrib4uiv(index: GLuint, v: GLuint_): void {
+    return OpenGL32.LoadExtension('glVertexAttrib4uiv')(index, v);
+  }
+  public static glVertexAttrib4usv(index: GLuint, v: GLushort_): void {
+    return OpenGL32.LoadExtension('glVertexAttrib4usv')(index, v);
+  }
+  public static glVertexAttribPointer(index: GLuint, size: GLint, type: GLenum, normalized: GLboolean, stride: GLsizei, pointer: GLvoid_): void {
+    return OpenGL32.LoadExtension('glVertexAttribPointer')(index, size, type, normalized, stride, pointer);
+  }
+
+  // ---------------------------------------------------------------------------
+  // GL Extensions - VAO (lazy-loaded via wglGetProcAddress)
+  // ---------------------------------------------------------------------------
+
+  public static glBindVertexArray(array: GLuint): void {
+    return OpenGL32.LoadExtension('glBindVertexArray')(array);
+  }
+  public static glDeleteVertexArrays(n: GLsizei, arrays: GLuint_): void {
+    return OpenGL32.LoadExtension('glDeleteVertexArrays')(n, arrays);
+  }
+  public static glGenVertexArrays(n: GLsizei, arrays: GLuint_): void {
+    return OpenGL32.LoadExtension('glGenVertexArrays')(n, arrays);
+  }
+  public static glIsVertexArray(array: GLuint): GLboolean {
+    return OpenGL32.LoadExtension('glIsVertexArray')(array);
+  }
+
+  // ---------------------------------------------------------------------------
+  // GL Extensions - FBO (lazy-loaded via wglGetProcAddress)
+  // ---------------------------------------------------------------------------
+
+  public static glBindFramebuffer(target: GLenum, framebuffer: GLuint): void {
+    return OpenGL32.LoadExtension('glBindFramebuffer')(target, framebuffer);
+  }
+  public static glBindRenderbuffer(target: GLenum, renderbuffer: GLuint): void {
+    return OpenGL32.LoadExtension('glBindRenderbuffer')(target, renderbuffer);
+  }
+  public static glCheckFramebufferStatus(target: GLenum): GLenum {
+    return OpenGL32.LoadExtension('glCheckFramebufferStatus')(target);
+  }
+  public static glDeleteFramebuffers(n: GLsizei, framebuffers: GLuint_): void {
+    return OpenGL32.LoadExtension('glDeleteFramebuffers')(n, framebuffers);
+  }
+  public static glDeleteRenderbuffers(n: GLsizei, renderbuffers: GLuint_): void {
+    return OpenGL32.LoadExtension('glDeleteRenderbuffers')(n, renderbuffers);
+  }
+  public static glFramebufferRenderbuffer(target: GLenum, attachment: GLenum, renderbuffertarget: GLenum, renderbuffer: GLuint): void {
+    return OpenGL32.LoadExtension('glFramebufferRenderbuffer')(target, attachment, renderbuffertarget, renderbuffer);
+  }
+  public static glFramebufferTexture2D(target: GLenum, attachment: GLenum, textarget: GLenum, texture: GLuint, level: GLint): void {
+    return OpenGL32.LoadExtension('glFramebufferTexture2D')(target, attachment, textarget, texture, level);
+  }
+  public static glGenFramebuffers(n: GLsizei, framebuffers: GLuint_): void {
+    return OpenGL32.LoadExtension('glGenFramebuffers')(n, framebuffers);
+  }
+  public static glGenRenderbuffers(n: GLsizei, renderbuffers: GLuint_): void {
+    return OpenGL32.LoadExtension('glGenRenderbuffers')(n, renderbuffers);
+  }
+  public static glGenerateMipmap(target: GLenum): void {
+    return OpenGL32.LoadExtension('glGenerateMipmap')(target);
+  }
+  public static glGetFramebufferAttachmentParameteriv(target: GLenum, attachment: GLenum, pname: GLenum, params: GLint_): void {
+    return OpenGL32.LoadExtension('glGetFramebufferAttachmentParameteriv')(target, attachment, pname, params);
+  }
+  public static glGetRenderbufferParameteriv(target: GLenum, pname: GLenum, params: GLint_): void {
+    return OpenGL32.LoadExtension('glGetRenderbufferParameteriv')(target, pname, params);
+  }
+  public static glIsFramebuffer(framebuffer: GLuint): GLboolean {
+    return OpenGL32.LoadExtension('glIsFramebuffer')(framebuffer);
+  }
+  public static glIsRenderbuffer(renderbuffer: GLuint): GLboolean {
+    return OpenGL32.LoadExtension('glIsRenderbuffer')(renderbuffer);
+  }
+  public static glRenderbufferStorage(target: GLenum, internalformat: GLenum, width: GLsizei, height: GLsizei): void {
+    return OpenGL32.LoadExtension('glRenderbufferStorage')(target, internalformat, width, height);
+  }
 }
 
 export default OpenGL32;
