@@ -418,8 +418,8 @@ class OpenGL32 {
     glTexGenfv: { args: [FFIType.u32, FFIType.u32, FFIType.ptr], returns: FFIType.void },
     glTexGeni: { args: [FFIType.u32, FFIType.u32, FFIType.i32], returns: FFIType.void },
     glTexGeniv: { args: [FFIType.u32, FFIType.u32, FFIType.ptr], returns: FFIType.void },
-    glTexImage1D: { args: [FFIType.u32, FFIType.i32, FFIType.i32, FFIType.i32, FFIType.i32, FFIType.u32, FFIType.u32, FFIType.ptr], returns: FFIType.void },
-    glTexImage2D: { args: [FFIType.u32, FFIType.i32, FFIType.i32, FFIType.i32, FFIType.i32, FFIType.i32, FFIType.u32, FFIType.u32, FFIType.ptr], returns: FFIType.void }, // prettier-ignore
+    glTexImage1D: { args: [FFIType.u32, FFIType.i32, FFIType.i32, FFIType.i32, FFIType.i32, FFIType.i32, FFIType.u32, FFIType.ptr], returns: FFIType.void },
+    glTexImage2D: { args: [FFIType.u32, FFIType.i32, FFIType.i32, FFIType.i32, FFIType.i32, FFIType.i32, FFIType.i32, FFIType.u32, FFIType.ptr], returns: FFIType.void }, // prettier-ignore
     glTexParameterf: { args: [FFIType.u32, FFIType.u32, FFIType.f32], returns: FFIType.void },
     glTexParameterfv: { args: [FFIType.u32, FFIType.u32, FFIType.ptr], returns: FFIType.void },
     glTexParameteri: { args: [FFIType.u32, FFIType.u32, FFIType.i32], returns: FFIType.void },
@@ -1065,7 +1065,6 @@ class OpenGL32 {
     return OpenGL32.Load('glGetPolygonStipple')(mask);
   }
 
-  // https://learn.microsoft.com/en-us/windows/win32/opengl/glgetstring
   // https://learn.microsoft.com/en-us/windows/win32/opengl/glgetstring
   public static glGetString(name: GLenum): GLubyte_ {
     return OpenGL32.Load('glGetString')(name);
@@ -1985,13 +1984,13 @@ class OpenGL32 {
 
   // prettier-ignore
   // https://learn.microsoft.com/en-us/windows/win32/opengl/glteximage1d
-  public static glTexImage1D(target: GLenum, level: GLint, internalformat: GLint, width: GLsizei, border: GLint, format: GLenum, type: GLenum, pixels: GLvoid_) : void {
+  public static glTexImage1D(target: GLenum, level: GLint, internalformat: GLint, width: GLsizei, border: GLint, format: GLint, type: GLenum, pixels: GLvoid_) : void {
     return OpenGL32.Load('glTexImage1D')(target, level, internalformat, width, border, format, type, pixels);
   }
 
   // prettier-ignore
   // https://learn.microsoft.com/en-us/windows/win32/opengl/glteximage2d
-  public static glTexImage2D(target: GLenum, level: GLint, internalformat: GLint, width: GLsizei, height: GLsizei, border: GLint, format: GLenum, type: GLenum, pixels: GLvoid_) : void {
+  public static glTexImage2D(target: GLenum, level: GLint, internalformat: GLint, width: GLsizei, height: GLsizei, border: GLint, format: GLint, type: GLenum, pixels: GLvoid_) : void {
     return OpenGL32.Load('glTexImage2D')(target, level, internalformat, width, height, border, format, type, pixels);
   }
 
