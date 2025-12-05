@@ -45,7 +45,9 @@
   "private": false,
   "scripts": {
     "example": "bun ./example/openGL32.ts",
-    "example:circle": "bun ./example/bouncingCircle.ts"
+    "example:circle": "bun ./example/bouncingCircle.ts",
+    "example:physics": "bun ./example/physicsDemo.ts",
+    "example:pendulum": "bun ./example/nPendulum.ts"
   },
   "sideEffects": false,
   "type": "module"

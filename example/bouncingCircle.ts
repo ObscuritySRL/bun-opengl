@@ -15,14 +15,22 @@ const HEIGHT = 480,
   WIDTH = 640;
 
 // Circle properties
-const CIRCLE_RADIUS = 40,
+const CIRCLE_RADIUS = 50,
   CIRCLE_SEGMENTS = 32,
-  CIRCLE_SPEED = 500;
+  MIN_SPEED = 100,
+  MAX_SPEED = 400;
 
-let circleDirectionX = 1, // 1 = right, -1 = left
+let circleSpeedX = 200,
+  circleSpeedY = 200,
+  circleDirectionX = 1, // 1 = right, -1 = left
   circleDirectionY = 1, // 1 = down, -1 = up
   circleX = WIDTH / 2,
   circleY = HEIGHT / 2;
+
+// Randomize speed within the allowed range
+function randomizeSpeed(): number {
+  return MIN_SPEED + Math.random() * (MAX_SPEED - MIN_SPEED);
+}
 
 // -----------------------------------------------------------------------------
 // Minimal Win32 API bindings (User32 + GDI32)
@@ -75,7 +83,6 @@ const enum WindowStyle {
   WS_VISIBLE = 0x10000000,
 }
 
-
 // -----------------------------------------------------------------------------
 // Window procedure and callbacks
 // -----------------------------------------------------------------------------
@@ -104,10 +111,8 @@ const createWndProc = (): Pointer => {
 
 // Pre-allocated PIXELFORMATDESCRIPTOR (same as Overlay.ts approach)
 const PIXEL_FORMAT_DESCRIPTOR = Buffer.from([
-  0x28, 0x00, 0x01, 0x00, 0x25, 0x00, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x18,
-  0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x00,
+  0x28, 0x00, 0x01, 0x00, 0x25, 0x00, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x18, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00,
 ]);
 
 // -----------------------------------------------------------------------------
@@ -140,8 +145,14 @@ function createWindow(): { hwnd: Pointer; hdc: Pointer; hdcU64: bigint } {
     Buffer.from('STATIC\0', 'utf16le'),
     Buffer.from('Bouncing Circle - bun-opengl32\0', 'utf16le'),
     WindowStyle.WS_OVERLAPPEDWINDOW | WindowStyle.WS_VISIBLE,
-    x, y, adjustedWidth, adjustedHeight,
-    null, null, hInstance, null
+    x,
+    y,
+    adjustedWidth,
+    adjustedHeight,
+    null,
+    null,
+    hInstance,
+    null
   );
   if (!hwnd) throw new Error(`CreateWindowExW failed: ${kernel32.symbols.GetLastError()}`);
 
@@ -234,25 +245,33 @@ function render(): void {
 
 function update(deltaTime: number): void {
   // Move circle based on time (deltaTime is in seconds)
-  circleX += circleDirectionX * CIRCLE_SPEED * deltaTime;
-  circleY += circleDirectionY * CIRCLE_SPEED * deltaTime;
+  circleX += circleDirectionX * circleSpeedX * deltaTime;
+  circleY += circleDirectionY * circleSpeedY * deltaTime;
 
   // Bounce off walls (X axis)
   if (circleX + CIRCLE_RADIUS >= WIDTH) {
     circleX = WIDTH - CIRCLE_RADIUS;
     circleDirectionX = -1;
+    circleSpeedX = randomizeSpeed();
+    circleSpeedY = randomizeSpeed();
   } else if (circleX - CIRCLE_RADIUS <= 0) {
     circleX = CIRCLE_RADIUS;
     circleDirectionX = 1;
+    circleSpeedX = randomizeSpeed();
+    circleSpeedY = randomizeSpeed();
   }
 
   // Bounce off walls (Y axis)
   if (circleY + CIRCLE_RADIUS >= HEIGHT) {
     circleY = HEIGHT - CIRCLE_RADIUS;
     circleDirectionY = -1;
+    circleSpeedX = randomizeSpeed();
+    circleSpeedY = randomizeSpeed();
   } else if (circleY - CIRCLE_RADIUS <= 0) {
     circleY = CIRCLE_RADIUS;
     circleDirectionY = 1;
+    circleSpeedX = randomizeSpeed();
+    circleSpeedY = randomizeSpeed();
   }
 }
 
