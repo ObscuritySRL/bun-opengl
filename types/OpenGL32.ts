@@ -568,8 +568,8 @@ export type GLvoid_ = Pointer;
 // Windows/WGL related types (aliases for clarity in bindings)
 export type BOOL = number;
 export type DWORD = number;
-export type HDC = Pointer;
-export type HGLRC = Pointer;
+export type HDC = bigint;
+export type HGLRC = bigint;
 export type INT = number;
 export type LPCSTR = Pointer;
 export type LPPIXELFORMATDESCRIPTOR = Pointer;

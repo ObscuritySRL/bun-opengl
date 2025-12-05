@@ -197,15 +197,15 @@ class OpenGL32 {
    */
   private static readonly ExtensionSymbols = {
     // WGL_ARB_extensions_string
-    wglGetExtensionsStringARB: { args: [FFIType.ptr], returns: FFIType.ptr },
+    wglGetExtensionsStringARB: { args: [FFIType.u64], returns: FFIType.ptr },
 
     // WGL_ARB_pixel_format
-    wglChoosePixelFormatARB: { args: [FFIType.ptr, FFIType.ptr, FFIType.ptr, FFIType.u32, FFIType.ptr, FFIType.ptr], returns: FFIType.i32 },
-    wglGetPixelFormatAttribfvARB: { args: [FFIType.ptr, FFIType.i32, FFIType.i32, FFIType.u32, FFIType.ptr, FFIType.ptr], returns: FFIType.i32 },
-    wglGetPixelFormatAttribivARB: { args: [FFIType.ptr, FFIType.i32, FFIType.i32, FFIType.u32, FFIType.ptr, FFIType.ptr], returns: FFIType.i32 },
+    wglChoosePixelFormatARB: { args: [FFIType.u64, FFIType.ptr, FFIType.ptr, FFIType.u32, FFIType.ptr, FFIType.ptr], returns: FFIType.i32 },
+    wglGetPixelFormatAttribfvARB: { args: [FFIType.u64, FFIType.i32, FFIType.i32, FFIType.u32, FFIType.ptr, FFIType.ptr], returns: FFIType.i32 },
+    wglGetPixelFormatAttribivARB: { args: [FFIType.u64, FFIType.i32, FFIType.i32, FFIType.u32, FFIType.ptr, FFIType.ptr], returns: FFIType.i32 },
 
     // WGL_ARB_create_context
-    wglCreateContextAttribsARB: { args: [FFIType.ptr, FFIType.ptr, FFIType.ptr], returns: FFIType.ptr },
+    wglCreateContextAttribsARB: { args: [FFIType.u64, FFIType.u64, FFIType.ptr], returns: FFIType.u64 },
 
     // WGL_EXT_extensions_string
     wglGetExtensionsStringEXT: { args: [], returns: FFIType.ptr },
@@ -677,30 +677,30 @@ class OpenGL32 {
     glVertex4sv: { args: [FFIType.ptr], returns: FFIType.void },
     glVertexPointer: { args: [FFIType.i32, FFIType.u32, FFIType.i32, FFIType.ptr], returns: FFIType.void },
     glViewport: { args: [FFIType.i32, FFIType.i32, FFIType.i32, FFIType.i32], returns: FFIType.void },
-    wglChoosePixelFormat: { args: [FFIType.ptr, FFIType.ptr], returns: FFIType.i32 },
-    wglCopyContext: { args: [FFIType.ptr, FFIType.ptr, FFIType.u32], returns: FFIType.i32 },
-    wglCreateContext: { args: [FFIType.ptr], returns: FFIType.ptr },
-    wglCreateLayerContext: { args: [FFIType.ptr, FFIType.i32], returns: FFIType.ptr },
-    wglDeleteContext: { args: [FFIType.ptr], returns: FFIType.i32 },
-    wglDescribeLayerPlane: { args: [FFIType.ptr, FFIType.i32, FFIType.i32, FFIType.u32, FFIType.ptr], returns: FFIType.i32 },
-    wglDescribePixelFormat: { args: [FFIType.ptr, FFIType.i32, FFIType.u32, FFIType.ptr], returns: FFIType.i32 },
-    wglGetCurrentContext: { args: [], returns: FFIType.ptr },
-    wglGetCurrentDC: { args: [], returns: FFIType.ptr },
+    wglChoosePixelFormat: { args: [FFIType.u64, FFIType.ptr], returns: FFIType.i32 },
+    wglCopyContext: { args: [FFIType.u64, FFIType.u64, FFIType.u32], returns: FFIType.i32 },
+    wglCreateContext: { args: [FFIType.u64], returns: FFIType.u64 },
+    wglCreateLayerContext: { args: [FFIType.u64, FFIType.i32], returns: FFIType.u64 },
+    wglDeleteContext: { args: [FFIType.u64], returns: FFIType.i32 },
+    wglDescribeLayerPlane: { args: [FFIType.u64, FFIType.i32, FFIType.i32, FFIType.u32, FFIType.ptr], returns: FFIType.i32 },
+    wglDescribePixelFormat: { args: [FFIType.u64, FFIType.i32, FFIType.u32, FFIType.ptr], returns: FFIType.i32 },
+    wglGetCurrentContext: { args: [], returns: FFIType.u64 },
+    wglGetCurrentDC: { args: [], returns: FFIType.u64 },
     wglGetDefaultProcAddress: { args: [FFIType.ptr], returns: FFIType.ptr },
-    wglGetLayerPaletteEntries: { args: [FFIType.ptr, FFIType.i32, FFIType.i32, FFIType.i32, FFIType.ptr], returns: FFIType.i32 },
+    wglGetLayerPaletteEntries: { args: [FFIType.u64, FFIType.i32, FFIType.i32, FFIType.i32, FFIType.ptr], returns: FFIType.i32 },
     wglGetProcAddress: { args: [FFIType.ptr], returns: FFIType.ptr },
-    wglMakeCurrent: { args: [FFIType.ptr, FFIType.ptr], returns: FFIType.i32 },
-    wglRealizeLayerPalette: { args: [FFIType.ptr, FFIType.i32, FFIType.i32], returns: FFIType.i32 },
-    wglSetLayerPaletteEntries: { args: [FFIType.ptr, FFIType.i32, FFIType.i32, FFIType.i32, FFIType.ptr], returns: FFIType.i32 },
-    wglSetPixelFormat: { args: [FFIType.ptr, FFIType.i32, FFIType.ptr], returns: FFIType.i32 },
-    wglShareLists: { args: [FFIType.ptr, FFIType.ptr], returns: FFIType.i32 },
-    wglSwapBuffers: { args: [FFIType.ptr], returns: FFIType.i32 },
-    wglSwapLayerBuffers: { args: [FFIType.ptr, FFIType.u32], returns: FFIType.i32 },
+    wglMakeCurrent: { args: [FFIType.u64, FFIType.u64], returns: FFIType.i32 },
+    wglRealizeLayerPalette: { args: [FFIType.u64, FFIType.i32, FFIType.i32], returns: FFIType.i32 },
+    wglSetLayerPaletteEntries: { args: [FFIType.u64, FFIType.i32, FFIType.i32, FFIType.i32, FFIType.ptr], returns: FFIType.i32 },
+    wglSetPixelFormat: { args: [FFIType.u64, FFIType.i32, FFIType.ptr], returns: FFIType.i32 },
+    wglShareLists: { args: [FFIType.u64, FFIType.u64], returns: FFIType.i32 },
+    wglSwapBuffers: { args: [FFIType.u64], returns: FFIType.i32 },
+    wglSwapLayerBuffers: { args: [FFIType.u64, FFIType.u32], returns: FFIType.i32 },
     wglSwapMultipleBuffers: { args: [FFIType.u32, FFIType.ptr], returns: FFIType.u32 },
-    wglUseFontBitmapsA: { args: [FFIType.ptr, FFIType.u32, FFIType.u32, FFIType.u32], returns: FFIType.i32 },
-    wglUseFontBitmapsW: { args: [FFIType.ptr, FFIType.u32, FFIType.u32, FFIType.u32], returns: FFIType.i32 },
-    wglUseFontOutlinesA: { args: [FFIType.ptr, FFIType.u32, FFIType.u32, FFIType.u32, FFIType.f32, FFIType.f32, FFIType.i32, FFIType.ptr], returns: FFIType.i32 },
-    wglUseFontOutlinesW: { args: [FFIType.ptr, FFIType.u32, FFIType.u32, FFIType.u32, FFIType.f32, FFIType.f32, FFIType.i32, FFIType.ptr], returns: FFIType.i32 },
+    wglUseFontBitmapsA: { args: [FFIType.u64, FFIType.u32, FFIType.u32, FFIType.u32], returns: FFIType.i32 },
+    wglUseFontBitmapsW: { args: [FFIType.u64, FFIType.u32, FFIType.u32, FFIType.u32], returns: FFIType.i32 },
+    wglUseFontOutlinesA: { args: [FFIType.u64, FFIType.u32, FFIType.u32, FFIType.u32, FFIType.f32, FFIType.f32, FFIType.i32, FFIType.ptr], returns: FFIType.i32 },
+    wglUseFontOutlinesW: { args: [FFIType.u64, FFIType.u32, FFIType.u32, FFIType.u32, FFIType.f32, FFIType.f32, FFIType.i32, FFIType.ptr], returns: FFIType.i32 },
   } as const satisfies Record<string, FFIFunction>;
 
   // https://learn.microsoft.com/en-us/windows/win32/opengl/glaccum
